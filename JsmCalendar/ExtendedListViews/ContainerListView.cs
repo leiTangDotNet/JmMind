@@ -881,7 +881,7 @@ namespace JsmMind
 		private int borderWid = 2;
 		protected JsmMind.ColumnHeaderCollection columns;			
 		protected ColumnHeaderStyle headerStyle = ColumnHeaderStyle.Nonclickable;
-		protected int headerBuffer = 2;
+		protected int headerBuffer = 0;
 
 		protected bool hideSelection = true;
 		protected bool hoverSelection = false;
@@ -2535,7 +2535,7 @@ namespace JsmMind
 			if (hscrollBar.Visible && vscrollBar.Visible)
 			{
 				g.ResetClip();
-				g.FillRectangle(SystemBrushes.Control, r.Width-vscrollBar.Width-borderWid, r.Height-hscrollBar.Height-borderWid, vscrollBar.Width, hscrollBar.Height);
+				g.FillRectangle(SystemBrushes.Control, r.Width-vscrollBar.Width, r.Height-hscrollBar.Height, vscrollBar.Width, hscrollBar.Height);
 			}
 		}
 		// visual styles rendering functions

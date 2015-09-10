@@ -102,6 +102,10 @@ namespace JsmMind
             totalHeight -= hb;
 
             int top = this.CenterPoint.Y - totalHeight / 2;
+            if(top<this.height/2)
+            {
+                top = this.height / 2;
+            }
             for (int i = 0; i < count; i++)
             {
                 SubjectBase childSubject = this.ChildSubjects[i];
@@ -197,18 +201,19 @@ namespace JsmMind
             } 
             //是否拖拽到其他其他节点
             this.CenterPoint = new Point(movePoint.X, movePoint.Y);
-            this.AdjustPosition();
-            this.parentSubject.AdjustPosition();
+            this.AdjustPosition();   
+            if(this.parentSubject!=null)
+                this.parentSubject.AdjustPosition();
         }
 
         /// <summary>
         /// 获取主题显示总高度（所有子主题）
         /// </summary>
         /// <returns></returns>
-        protected int GetTotalHeight()
+        public int GetTotalHeight()
         {
             int hb = 0;
-            if(this.childSubjects.Count<=1 || this.expanded==false)
+            if(this.childSubjects.Count<1 || this.expanded==false)
             {
                 hb = this.height;
             }
@@ -216,10 +221,7 @@ namespace JsmMind
             {
                 SubjectBase firstSubject=this.childSubjects[0];
                 SubjectBase lastSubject =this.childSubjects[this.childSubjects.Count-1];
-
-
-
-
+                 
                 int minHeight = firstSubject.centerPoint.Y - firstSubject.height / 2;
                 int maxHeight = lastSubject.centerPoint.Y + lastSubject.height / 2;
 
@@ -254,8 +256,7 @@ namespace JsmMind
             }
             return hb;
         }
-
-
+         
         /// <summary>
         /// 设置主题样式
         /// </summary>
@@ -558,8 +559,9 @@ namespace JsmMind
 		protected Bitmap bmpMinus, bmpPlus;
             
         private List<SubjectBase> subjectNodes;
-         
 
+        private int maxWidth = 0;
+          
 		private bool mouseActivate = false;
 
 		private bool allCollapsed = false;
@@ -774,9 +776,10 @@ namespace JsmMind
 		{
 			base.OnResize(e);
 
-            if (centerProject != null && subjectNodes.Count==1)
-                centerProject.CenterPoint = new Point(this.Width / 2, this.Height / 2);
-            //RefreshCalendarView();
+            if (centerProject != null && subjectNodes.Count<2)
+            { 
+                centerProject.CenterPoint = new Point(this.Width / 2, this.Height / 2); 
+            }
 		}
 
          
@@ -811,7 +814,8 @@ namespace JsmMind
                             //subject = new TitleBatchSubject();
                             //subject.CenterPoint = new Point(e.X, e.Y); 
                         }
-                        subjectNodes.Add(subject);
+                        if(subject!=null)
+                            subjectNodes.Add(subject);
                     }
 
                     selectedSubject = null;
@@ -987,6 +991,7 @@ namespace JsmMind
 			int maxrend = ClientRectangle.Height/itemheight+1;
 
 
+            AdjustScrollbars();
             RenderSubject(centerProject, g, r, 0);
             //for(i=0;i<subjectNodes.Count;i++)
             //{
@@ -995,10 +1000,11 @@ namespace JsmMind
             if(dragSubject!=null)
             {
                 RenderDragSubject(dragSubject, g, r, 0);
-            }
+            } 
 		} 
         protected override void DrawExtra(Graphics g, Rectangle r)
-        { 
+        {
+            base.DrawExtra(g, r);
         }
 
         protected override void DrawBackground(Graphics g, Rectangle r)
@@ -1011,8 +1017,8 @@ namespace JsmMind
         {
             int lb = 0;
             int hb = headerBuffer;
-            int left = r.Left + subjectNode.CenterPoint.X - subjectNode.Width / 2+lb;
-            int top = r.Left + subjectNode.CenterPoint.Y - subjectNode.Height / 2 + hb;
+            int left = r.Left + subjectNode.CenterPoint.X - subjectNode.Width / 2+lb-hscrollBar.Value;
+            int top = r.Left + subjectNode.CenterPoint.Y - subjectNode.Height / 2 + hb - vscrollBar.Value;
             string title = subjectNode.Title;
             Rectangle sr = new Rectangle(left, top, subjectNode.Width, subjectNode.Height);
             //绘制主题绘制区域
@@ -1448,69 +1454,47 @@ namespace JsmMind
         public override void AdjustScrollbars()
         {
             if(mapViewModel== MapViewModel.ExpandTwoSides)
-            { 
-                //allRowsHeight = 0;
-                //int rowCount = 24*2;
-                //for (int i = 0; i < rowCount; i++)
-                //{
-                //    allRowsHeight += itemheight; // itemheight * ((TreeListNode)nodes[i]).GetVisibleNodeCount(true);  //itemheight * 2 +
-                //}
-                //if (allRowsHeight > 0) allRowsHeight += ltHeight;
+            {
+                int allRowsHeight = GetSubjectMaxHeight(centerProject);
+                allRowsHeight += 20;
+                int allColsWidth = GetSubjectMaxWidth(centerProject);
+                allColsWidth += 20; 
+                vsize = vscrollBar.Width; 
+                vscrollBar.Left = this.ClientRectangle.Left + this.ClientRectangle.Width - vscrollBar.Width;
+                vscrollBar.Top = this.ClientRectangle.Top + headerBuffer;
+                vscrollBar.Height = this.ClientRectangle.Height - hsize - headerBuffer;
+                vscrollBar.Maximum = allRowsHeight;
+                vscrollBar.LargeChange = (this.ClientRectangle.Height - headerBuffer - hsize - 4 > 0 ? this.ClientRectangle.Height - headerBuffer - hsize - 4 : 0);
+                if (allRowsHeight > this.ClientRectangle.Height - headerBuffer - 4 - hsize)
+                {
+                    vscrollBar.Show();
+                    vsize = vscrollBar.Width;
+                }
+                else
+                {
+                    vscrollBar.Hide();
+                    vscrollBar.Value = 0;
+                    vsize = 0;
+                }
 
-                //vsize = vscrollBar.Width;
-              
-                //vscrollBar.Left = this.ClientRectangle.Left + this.ClientRectangle.Width - vscrollBar.Width - 2;
-                //vscrollBar.Top = this.ClientRectangle.Top + headerBuffer + 2;
-                //vscrollBar.Height = this.ClientRectangle.Height - hsize - headerBuffer - 2;
-                //vscrollBar.Maximum = allRowsHeight;
-                //vscrollBar.LargeChange = (this.ClientRectangle.Height - headerBuffer - hsize - 4 > 0 ? this.ClientRectangle.Height - headerBuffer - hsize - 4 : 0);
-                //if (allRowsHeight > this.ClientRectangle.Height - headerBuffer - 4 - hsize)
-                //{
-                //    vscrollBar.Show();
-                //    vsize = vscrollBar.Width;
-                //}
-                //else
-                //{
-                //    vscrollBar.Hide();
-                //    vscrollBar.Value = 0;
-                //    vsize = 0;
-                //}
-
-
-                //allColsWidth = 0;
-                //for (int i = 0; i < columns.Count; i++)
-                //{
-                //    allColsWidth += columns[i].Width;
-                //}
-                //hsize = hscrollBar.Height; 
-                //hscrollBar.Left = this.ClientRectangle.Left + 2;
-                //hscrollBar.Width = this.ClientRectangle.Width - vsize - 4;
-                //hscrollBar.Top = this.ClientRectangle.Top + this.ClientRectangle.Height - hscrollBar.Height - 2;
-                //hscrollBar.Maximum = allColsWidth;
-                //if (allColsWidth > this.ClientRectangle.Width - 4 - vsize)
-                //{
-                //    hscrollBar.Show();
-                //    hsize = hscrollBar.Height;
-                //}
-                //else
-                //{
-                //    hscrollBar.Hide();
-                //    hscrollBar.Value = 0;
-                //    hsize = 0;
-                //} 
-                //hscrollBar.Width = this.ClientRectangle.Width - vsize - 4;
-                //hscrollBar.LargeChange = (this.ClientRectangle.Width - vsize - 4 > 0 ? this.ClientRectangle.Width - vsize - 4 : 0);
-                //hscrollBar.Top = this.ClientRectangle.Top + this.ClientRectangle.Height - hscrollBar.Height - 2;
-                //if (allColsWidth > this.ClientRectangle.Width - 4 - vsize)
-                //{
-                //    hscrollBar.Show();
-                //}
-                //else
-                //{
-                //    hscrollBar.Hide();
-                //    hscrollBar.Value = 0;
-                //    hsize = 0;
-                //}
+                hsize = hscrollBar.Height; 
+                hscrollBar.Left = this.ClientRectangle.Left;
+                hscrollBar.Top = this.ClientRectangle.Top + this.ClientRectangle.Height - hscrollBar.Height;
+                hscrollBar.Width = this.ClientRectangle.Width - vsize;
+                hscrollBar.LargeChange = (this.ClientRectangle.Width - vsize - 4 > 0 ? this.ClientRectangle.Width - vsize - 4 : 0);
+                hscrollBar.Maximum = allColsWidth;
+                if (allColsWidth > this.ClientRectangle.Width - 4 - vsize)
+                {
+                    hscrollBar.Show();
+                    hsize = hscrollBar.Height;
+                }
+                else
+                {
+                    hscrollBar.Hide();
+                    hscrollBar.Value = 0;
+                    hsize = 0;
+                } 
+                 
             }
             else
             {
@@ -1521,6 +1505,66 @@ namespace JsmMind
             }
         }
 
+        private int GetSubjectMaxWidth(SubjectBase subject)
+        {
+            return GetSubjectMaxWidth(subject, 0);
+        }
+        private int GetSubjectMaxWidth(SubjectBase subject,int max)
+        { 
+            int maxWidth=max;
+            if(subject.Expanded)
+            { 
+                foreach (SubjectBase n in subject.ChildSubjects)
+                {
+                    if (n.Expanded)
+                    {
+                        maxWidth = GetSubjectMaxWidth(n, maxWidth);
+                    }
+
+                    if (n.CenterPoint.X + n.Width / 2 > maxWidth)
+                    {
+                        maxWidth = n.CenterPoint.X + n.Width / 2;
+                    }
+                }
+            }
+
+            if (subject.CenterPoint.X + subject.Width / 2 > maxWidth)
+            {
+                maxWidth = subject.CenterPoint.X + subject.Width / 2;
+            }
+            return maxWidth;
+        }
+
+        
+        private int GetSubjectMaxHeight(SubjectBase subject)
+        {
+            return GetSubjectMaxHeight(subject, 0);
+        }
+        private int GetSubjectMaxHeight(SubjectBase subject, int max)
+        {
+            int maxHeight = max;
+            if (subject.Expanded)
+            {
+                foreach (SubjectBase n in subject.ChildSubjects)
+                {
+                    if (n.Expanded)
+                    {
+                        maxHeight = GetSubjectMaxHeight(n, maxHeight);
+                    }
+
+                    if (n.CenterPoint.Y + n.Height / 2 > maxHeight)
+                    {
+                        maxHeight = n.CenterPoint.Y + n.Height / 2;
+                    }
+                }
+            }
+
+            if (subject.CenterPoint.Y + subject.Height / 2 > maxHeight)
+            {
+                maxHeight = subject.CenterPoint.Y + subject.Height / 2;
+            }
+            return maxHeight;
+        } 
         private int GetChildSubjectCount(SubjectBase node)
         {
             int rs = 0;
@@ -1550,7 +1594,7 @@ namespace JsmMind
         private SubjectBase SubjectInArea(MouseEventArgs e)
         {
             foreach (SubjectBase taskEvent in subjectNodes)
-            { 
+            {  
                 Rectangle r = taskEvent.RectAreas;
                 if (r.Left <= e.X && r.Left + r.Width >= e.X
                         && r.Top <= e.Y && r.Top + r.Height >= e.Y)
