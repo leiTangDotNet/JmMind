@@ -17,7 +17,7 @@ namespace WindowsFormsApplication1
         {
             InitializeComponent();
             this.calendarView1 = new MindDocView(); 
-            panel1.Controls.Add(this.calendarView1);
+            panel2.Controls.Add(this.calendarView1);
             this.calendarView1.Dock = DockStyle.Fill;
         }
          
@@ -26,6 +26,17 @@ namespace WindowsFormsApplication1
         private void Form1_Load(object sender, EventArgs e)
         {
            
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            using(OpenFileDialog ofd=new OpenFileDialog())
+            {
+                if(ofd.ShowDialog()== System.Windows.Forms.DialogResult.OK)
+                {
+                    this.calendarView1.SelectedSubject.AddImage(ofd.FileName); 
+                }
+            }
         } 
     }
 }

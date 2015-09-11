@@ -29,7 +29,39 @@ namespace JsmMind
 
 	#region Event Stuff
 	#endregion
-     
+
+    #region SubjectPicture
+    [Serializable]
+    public class SubjectPicture
+    {
+        private Image subjectImage;
+        private Rectangle rectArea;
+
+        public SubjectPicture(string url)
+        {
+            subjectImage = new Bitmap(url);
+        }
+
+        public SubjectPicture(Image img)
+        {
+            subjectImage = img;
+        }
+
+        public Image SubjectImage
+        {
+            get { return subjectImage; }
+            set { subjectImage = value; }
+        }
+
+
+        public Rectangle RectArea
+        {
+            get { return rectArea; }
+            set { rectArea = value; }
+        }
+
+    }
+    #endregion
     #region Subject
     /// <summary>
     /// 主题基类
@@ -48,16 +80,22 @@ namespace JsmMind
         private Color borderColor = Color.Green;
         private Color selectColor = Color.SteelBlue;
         private Color activeColor = Color.LightSteelBlue;
-
+         
         private Point centerPoint = new Point(0, 0);
         private int width = 0;
         private int height = 0;
+        private int marginWidth = 20; 
+        private int marginHeight = 10;
+
+
         private int branchLinkWidth = 30;
         private int branchSplitHeight = 12;
 
         private bool expanded = true; 
         private bool visible = true;
         private Rectangle rectAreas;
+        private Rectangle rectTitle;
+         
         private Rectangle rectCollapse;
 
         private Rectangle rectPlusLeft; 
@@ -69,6 +107,9 @@ namespace JsmMind
         private SubjectBase parentSubject = null;
 
         private List<SubjectBase> childSubjects = new List<SubjectBase>();
+
+        private List<SubjectPicture> subjectPictures = new List<SubjectPicture>();
+
 
 
         public SubjectBase DeepClone()
@@ -128,6 +169,46 @@ namespace JsmMind
                 childSubject.AdjustPosition();
             } 
         }
+
+        public void AdjustSubjectSize()
+        {
+            Image bmp=new Bitmap(200,200);
+            Graphics g = Graphics.FromImage(bmp);
+
+            int w = 0;
+            int h = 0;
+            foreach(SubjectPicture subjectPicture in subjectPictures)
+            {
+                w += subjectPicture.SubjectImage.Width;
+                w += 5;
+
+                if(subjectPicture.SubjectImage.Height>h)
+                {
+                    h = subjectPicture.SubjectImage.Height;
+                }
+            }
+            //绘制文本
+            SizeF size = g.MeasureString(this.title,this.font);
+            w += (int)size.Width;
+            if(size.Height>h)
+            {
+                h = (int)size.Height;
+            }
+
+            this.width = this.marginWidth + w + this.marginWidth;
+            this.height = this.marginHeight + h + this.marginHeight;
+
+            if(this.parentSubject!=null)
+            {
+                this.parentSubject.AdjustPosition();
+            } 
+            SubjectBase topSubject = this.GetTopSubect();
+            if (topSubject != null)
+            {
+                topSubject.AdjustPosition();
+            }
+        }
+
 
         /// <summary>
         /// 是否展开主题
@@ -211,6 +292,7 @@ namespace JsmMind
                 this.parentSubject.AdjustPosition();
         }
 
+
         /// <summary>
         /// 插入主题
         /// </summary>
@@ -238,7 +320,19 @@ namespace JsmMind
                     topSubject.AdjustPosition();
                 } 
             }  
+        } 
+
+        /// <summary>
+        /// 增加图片
+        /// </summary>
+        /// <param name="url">本地图片路径</param>
+        public void AddImage(string url)
+        {
+            SubjectPicture subjectPicture = new SubjectPicture(url);
+            this.subjectPictures.Add(subjectPicture);
+            this.AdjustSubjectSize();
         }
+
         /// <summary>
         /// 获取主题显示总高度（所有子主题）
         /// </summary>
@@ -307,7 +401,9 @@ namespace JsmMind
             {
                 case 1:
                     this.Width = 93;
-                    this.Height = 40;
+                    this.Height = 35;
+                    this.marginWidth = 20;
+                    this.marginHeight = 6;
                     this.BackColor = Color.AliceBlue;
                     this.ForeColor = Color.DimGray;
                     this.BorderColor = Color.SteelBlue;
@@ -317,6 +413,8 @@ namespace JsmMind
                 case 2:
                     this.Width = 83;
                     this.Height = 25;
+                    this.marginWidth = 15;
+                    this.marginHeight = 3;
                     this.BackColor = Color.Honeydew;
                     this.ForeColor = Color.DimGray;
                     this.BorderColor = Color.Green;
@@ -327,6 +425,8 @@ namespace JsmMind
                 case 3:
                     this.Width = 63;
                     this.Height = 20;
+                    this.marginWidth = 5;
+                    this.marginHeight = 2;
                     this.BackColor = Color.White;
                     this.ForeColor = Color.DimGray;
                     this.BorderColor = Color.Transparent;
@@ -336,6 +436,8 @@ namespace JsmMind
                 case 4:
                     this.Width = 73;
                     this.Height = 40;
+                    this.marginWidth = 20;
+                    this.marginHeight = 10;
                     this.BackColor = Color.LightYellow;
                     this.ForeColor = Color.DimGray;
                     this.BorderColor = Color.Orange;
@@ -345,6 +447,8 @@ namespace JsmMind
                 default: 
                     this.Width = 63;
                     this.Height = 20;
+                    this.marginWidth = 5;
+                    this.marginHeight = 2;
                     this.BackColor = Color.White;
                     this.ForeColor = Color.DimGray;
                     this.BorderColor = Color.Transparent;
@@ -358,6 +462,7 @@ namespace JsmMind
                 childSubject.SetTitleStyle();
             }
         }
+         
 
         /// <summary>
         /// 获取顶层主题
@@ -427,7 +532,7 @@ namespace JsmMind
             get { return activeColor; }
             set { activeColor = value; }
         }
-
+         
         public Point CenterPoint
         {
             get { return centerPoint; }
@@ -443,6 +548,17 @@ namespace JsmMind
             get { return height; }
             set { height = value; }
         } 
+        public int MarginWidth
+        {
+            get { return marginWidth; }
+            set { marginWidth = value; }
+        }
+        
+        public int MarginHeight
+        {
+            get { return marginHeight; }
+            set { marginHeight = value; }
+        }
         public int BranchLinkWidth
         {
             get { return branchLinkWidth; }
@@ -467,7 +583,13 @@ namespace JsmMind
         {
             get { return rectAreas; }
             set { rectAreas = value; }
-        } 
+        }
+        public Rectangle RectTitle
+        {
+            get { return rectTitle; }
+            set { rectTitle = value; }
+        }
+
         public Rectangle RectCollapse
         {
             get { return rectCollapse; }
@@ -518,6 +640,12 @@ namespace JsmMind
             get { return childSubjects; }
             set { childSubjects = value; }
         }
+
+        public List<SubjectPicture> SubjectPictures
+        {
+            get { return subjectPictures; }
+            set { subjectPictures = value; }
+        }
         #endregion
 
 
@@ -532,7 +660,9 @@ namespace JsmMind
         public CenterSubject()
         {
             this.Width = 133;
-            this.Height = 50;
+            this.Height = 45;
+            this.MarginWidth = 20;
+            this.MarginHeight = 10;
             this.BackColor = Color.WhiteSmoke;
             this.ForeColor = Color.DimGray;
             this.BorderColor = Color.DimGray;
@@ -622,8 +752,10 @@ namespace JsmMind
 
         //设置选中的节点; 
         private SubjectBase selectedSubject = null;
+
         private SubjectBase activeSubject = null;
         private SubjectBase collapseSubject = null;
+        private SubjectBase editSubject = null;
 
         private SubjectBase centerProject = null;
          
@@ -632,7 +764,7 @@ namespace JsmMind
         private int dragStartPy = 0;
          
         private int selectPlus = 0;  //1,2,3,4分别表示Lef,Top,Right,Bottom,0表示未选中
-
+          
         private Color tempBackColor;
         private Color tempForeColor;
 
@@ -644,6 +776,7 @@ namespace JsmMind
         private MapViewModel mapViewModel = MapViewModel.ExpandTwoSides;
          
         TextBox txtNode = null;
+        Image imgRender = null;
         System.Windows.Forms.Timer timerTxt;
          
 		#endregion
@@ -672,7 +805,7 @@ namespace JsmMind
             timerTxt.Interval = 1000;
             timerTxt.Enabled = false;
             timerTxt.Tick += timerTxt_Tick;
-
+            imgRender = new Bitmap(100, 100);
             currentTime = DateTime.Now;
             // Use reflection to load the
             // embedded bitmaps for the
@@ -795,8 +928,13 @@ namespace JsmMind
             {
                 mapViewModel = value;
             }
-        } 
+        }
 
+        public SubjectBase SelectedSubject
+        {
+            get { return selectedSubject; }
+            set { selectedSubject = value; }
+        }
 		#endregion
 
 		#region Overrides
@@ -850,11 +988,12 @@ namespace JsmMind
             {   
                 if (e.Y > headerBuffer) //点击标题以下区域，选择任务事件
                 { 
-                    //是否点击扩展按钮
+                    //主题选中状态
                     if (selectedSubject != null)
                     {
+                        //是否点击扩展按钮
                         int plus = PlusInArea(e, selectedSubject);
-                        if (plus > 0)
+                        if (plus > 0) 
                         {
                             SubjectBase subject = null;
                             switch (plus)
@@ -880,6 +1019,13 @@ namespace JsmMind
                             Invalidate();
                             return;
                         }
+                        //是否点击标题
+                        if (TitleInArea(e, selectedSubject))
+                        {
+                            txtNode.Tag = selectedSubject;
+                            ShowTxtBox();
+                            return;
+                        } 
                     }
 
                     //是否点击折叠按钮
@@ -946,24 +1092,36 @@ namespace JsmMind
                 else //处理鼠标移动活动主题,扩展按钮和折叠按钮
                 {
                     SubjectBase subjectNode = SubjectInArea(e);
-                    if (subjectNode != null)
+                    if (subjectNode != null)  //鼠标移动在主题上 
                     {
-                        activeSubject = subjectNode; 
+                        activeSubject = subjectNode;  
                     }
-                    else if (CollaspeInArea(e) != null)
+                    else if (CollaspeInArea(e) != null)//鼠标移动在折叠按钮上 
                     {
                         subjectNode = CollaspeInArea(e);
                         if (subjectNode != null)
                         {
                             collapseSubject = subjectNode;
                         }
-                    }
-                    else
+                    }  
+                    else  
                     {
-                        if (selectedSubject != null)
+                        
+                    }
+
+                    if (selectedSubject != null)  
+                    { 
+                        //主题选中状态
+                        int plus = PlusInArea(e, selectedSubject); //鼠标移动在扩展按钮上
+                        selectPlus = plus;
+
+                        if (TitleInArea(e, selectedSubject))  //鼠标是否移动到标题上
                         {
-                            int plus = PlusInArea(e, selectedSubject); 
-                            selectPlus = plus;
+                            Cursor.Current = Cursors.IBeam;
+                        }
+                        else
+                        { 
+                            Cursor.Current = Cursors.Default;
                         }
                     }
                      
@@ -1236,7 +1394,7 @@ namespace JsmMind
                 Rectangle activeArea = new Rectangle(sr.Left - 3, sr.Top - 6, sr.Width + 7, sr.Height + 10);
 
                 //绘制扩展
-                RenderPlus(g, activeArea,subject);
+                RenderPlus(g, activeArea, subject);
 
                 //绘制边框和背景
                 FillRoundRectangle(g, new SolidBrush(subject.SelectColor), activeArea, radius);
@@ -1253,10 +1411,28 @@ namespace JsmMind
             FillRoundRectangle(g, new SolidBrush(subject.BackColor), sr, radius);
             DrawRoundRectangle(g, p, sr, radius);
 
-            SizeF size = g.MeasureString(title, f);
-            g.DrawString(title, f, new SolidBrush(subject.ForeColor), (float)(sr.Left + sr.Width / 2 - size.Width / 2), (float)(sr.Top + sr.Height / 2 - Math.Floor(size.Height) / 2 + 1));
-             
+            //绘制图像
+            int lb = subject.MarginWidth;
+            for (int i = 0; i < subject.SubjectPictures.Count; i++)
+            {
+                Image img = subject.SubjectPictures[i].SubjectImage;
 
+                g.DrawImage(img, (float)(sr.Left + lb), (float)(sr.Top + sr.Height / 2 - img.Height / 2 + 1));
+                lb += (img.Width + 5);
+            }
+
+            SizeF size = g.MeasureString(title, f);
+            //绘制文本
+            float x_title = (float)(sr.Left + sr.Width / 2 - size.Width / 2); //居中绘制
+            float y_title = (float)(sr.Top + sr.Height / 2 - Math.Floor(size.Height) / 2 + 1);
+            if (lb != subject.MarginWidth) 
+            {
+                x_title = (float)(sr.Left + lb);//在图标后绘制
+            }
+
+            g.DrawString(title, f, new SolidBrush(subject.ForeColor), x_title, y_title);
+            Rectangle srTitle = new Rectangle((int)x_title, (int)y_title, (int)size.Width, (int)size.Height);
+            subject.RectTitle = srTitle; 
         }
 
         private void RenderLink(Graphics g, Rectangle r, Pen penLine, int x1, int y1, int x2, int y2)
@@ -1312,21 +1488,21 @@ namespace JsmMind
             Pen penPlus = new Pen(new SolidBrush(Color.White), 2.0f);
 
             Rectangle pmLeft = new Rectangle(area.Left - 8, area.Top + area.Height / 2 - 10, 40, 20);
-            subject.RectPlusLeft = pmLeft;
+            subject.RectPlusLeft = new Rectangle(pmLeft.Left,pmLeft.Top,pmLeft.Width/2,pmLeft.Height);
             RenderPlusLeft(g, pmLeft, penPlus, selectPlus == 1 ? Color.LightSteelBlue : Color.SteelBlue);
 
             Rectangle pmTop = new Rectangle(area.Left + area.Width / 2 - 10, area.Top - 8, 20, 40);
-            subject.RectPlusTop = pmTop;
+            subject.RectPlusTop = new Rectangle(pmTop.Left, pmTop.Top, pmTop.Width, pmTop.Height / 2);
             RenderPlusTop(g, pmTop, penPlus, selectPlus == 2 ? Color.LightSteelBlue : Color.SteelBlue);
 
 
             Rectangle pmRight = new Rectangle(area.Left + area.Width - (40 - 8) - 1, area.Top + area.Height / 2 - 10, 40, 20);
-            subject.RectPlusRight = pmRight;
+            subject.RectPlusRight = new Rectangle(pmRight.Left + pmRight.Width / 2, pmRight.Top, pmRight.Width / 2, pmRight.Height);
             RenderPlusRight(g, pmRight, penPlus, selectPlus == 3 ? Color.LightSteelBlue : Color.SteelBlue);
 
              
             Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - 10, area.Top + area.Height - (40 - 8) - 1, 20, 40);
-            subject.RectPlusBottom = pmBottom;
+            subject.RectPlusBottom = new Rectangle(pmBottom.Left, pmBottom.Top + pmBottom.Height / 2, pmBottom.Width, pmBottom.Height / 2);
             RenderPlusBottom(g, pmBottom, penPlus, selectPlus == 4 ? Color.LightSteelBlue : Color.SteelBlue);
         }
 
@@ -1459,7 +1635,21 @@ namespace JsmMind
             if (e.KeyCode == Keys.Enter || e.KeyCode== Keys.Escape)
             {
                 HideTxtBox();
+                return;
             }
+            Graphics g = Graphics.FromImage(imgRender);
+            SizeF size = g.MeasureString(txtNode.Text, txtNode.Font);
+
+            int w = (int)size.Width + 5;
+            txtNode.Width = w;
+
+            //if (this.txtNode.Tag != null && this.txtNode.AccessibleDescription != null && this.txtNode.AccessibleDescription == "Save")
+            //{
+            //    SubjectBase subject = txtNode.Tag as SubjectBase;
+            //    subject.Title = this.txtNode.Text;
+            //    subject.AdjustSubjectSize();
+            //    Invalidate();
+            //}
         }
 
         void txtNode_MouseMove(object sender, MouseEventArgs e)
@@ -1494,55 +1684,46 @@ namespace JsmMind
 
         private void ShowTxtBox()
         {
-            //if (txtNode.Tag == null) return;
-            //TaskEventNode task = txtNode.Tag as TaskEventNode;
-            //Rectangle r = task.SelectedTitleArea;
+            if (txtNode.Tag == null) return;
+            SubjectBase subject = txtNode.Tag as SubjectBase;
+            Rectangle r = subject.RectTitle;
 
-            //txtNode.AccessibleDescription = "Save";
-            //txtNode.Text = task.Title;
-            //int left = r.Left;
-            //int top = r.Top < headerBuffer ? headerBuffer : r.Top;
-            //int height = r.Height - (r.Top < headerBuffer ? headerBuffer - r.Top : 0);
-            //txtNode.Location=new Point(left,top);
-            //if (calendarViewMode == CalendarViewModel.Month || calendarViewMode== CalendarViewModel.Year)
-            //{
-            //    txtNode.Multiline = false;
-            //    txtNode.ClientSize = new Size(r.Width - 6, height);
-            //}
-            //else if(calendarViewMode== CalendarViewModel.TimeSpan)
-            //{
-            //    txtNode.Multiline = false;
-            //    txtNode.ClientSize = new Size(r.Width - 2, height);
-            //}
-            //else if (calendarViewMode == CalendarViewModel.Week || calendarViewMode== CalendarViewModel.WorkWeek || calendarViewMode == CalendarViewModel.Day || calendarViewMode== CalendarViewModel.MonthWeek)
-            //{
-            //    txtNode.Multiline = true;
-            //    txtNode.ClientSize = new Size(r.Width - 2, height - 2);
+            txtNode.AccessibleDescription = "Save";
+            txtNode.Text = subject.Title;
+            int left = r.Left+3;
+            int top = r.Top < headerBuffer ? headerBuffer : r.Top;
+            int height = r.Height - (r.Top < headerBuffer ? headerBuffer - r.Top : 0);
+            txtNode.Location = new Point(left, top);
 
-            //}
-            //txtNode.Parent = this;
-            //txtNode.Select(txtNode.Text.Length, 0);
-            //txtNode.Visible = true;
-            //txtNode.Focus(); 
+            txtNode.Font = subject.Font;
+            txtNode.Multiline = false;
+            txtNode.ClientSize = new Size(r.Width - 6, height);
+            txtNode.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            txtNode.BackColor = subject.BackColor;
+            txtNode.Parent = this;
+            txtNode.Select(txtNode.Text.Length, 0);
+            txtNode.Visible = true;
+            txtNode.Focus(); 
         }
         private void HideTxtBox()
         {
-            //if(this.txtNode.Tag!=null && this.txtNode.AccessibleDescription!=null && this.txtNode.AccessibleDescription == "Save")
-            //{ 
-            //    TaskEventNode task = txtNode.Tag as TaskEventNode;
-            //    task.Title = this.txtNode.Text;
-            //}
+            if (this.txtNode.Tag != null && this.txtNode.AccessibleDescription != null && this.txtNode.AccessibleDescription == "Save")
+            {
+                SubjectBase subject = txtNode.Tag as SubjectBase;
+                subject.Title = this.txtNode.Text;
+                subject.AdjustSubjectSize();
+            }
 
-            //this.txtNode.Tag = null;
-            //this.txtNode.AccessibleDescription = "";
-            //if(this.txtNode.Visible)
-            //{  
-            //    if (this.Controls.Contains(txtNode))
-            //    {
-            //        this.Controls.Remove(txtNode);
-            //    }
-            //    this.txtNode.Visible = false;
-            //}
+            this.txtNode.Tag = null;
+            this.txtNode.AccessibleDescription = "";
+            if (this.txtNode.Visible)
+            {
+                if (this.Controls.Contains(txtNode))
+                {
+                    this.Controls.Remove(txtNode);
+                }
+                this.txtNode.Visible = false;
+            }
 
         }
         #endregion
@@ -1716,6 +1897,17 @@ namespace JsmMind
                 }
             }
             return null;
+        }
+
+        private bool TitleInArea(MouseEventArgs e, SubjectBase taskEvent)
+        {
+            Rectangle r = taskEvent.RectTitle;
+            if (r.Left <= e.X && r.Left + r.Width >= e.X
+                    && r.Top <= e.Y && r.Top + r.Height >= e.Y)
+            {
+                return true;
+            }
+            return false;
         }
 
         private int PlusInArea(MouseEventArgs e,SubjectBase taskEvent)

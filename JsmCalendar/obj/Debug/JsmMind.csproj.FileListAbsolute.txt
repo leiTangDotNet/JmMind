@@ -5,4 +5,4 @@ D:\开发库\ShareProject\JmMind\JsmCalendar\obj\Debug\JsmMind.dll
 D:\开发库\ShareProject\JmMind\JsmCalendar\obj\Debug\JsmMind.pdb
 D:\开发库\ShareProject\JmMind\JsmCalendar\obj\Debug\JsmMind.ItemsChangedEventArgs.resources
 D:\开发库\ShareProject\JmMind\JsmCalendar\obj\Debug\JsmMind.csprojResolveAssemblyReference.cache
-D:\开发库\ShareProject\JmMind\JsmCalendar\obj\Debug\JsmMind.SubjectBase.resources
+D:\开发库\ShareProject\JmMind\JsmCalendar\obj\Debug\JsmMind.SubjectPicture.resources
