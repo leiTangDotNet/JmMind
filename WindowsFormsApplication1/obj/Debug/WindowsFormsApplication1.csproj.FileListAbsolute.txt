@@ -30,3 +30,4 @@ D:\开发库\ShareProject\JmMind\WindowsFormsApplication1\obj\Debug\WindowsForms
 D:\开发库\ShareProject\JmMind\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.Form1.resources
 D:\开发库\ShareProject\JmMind\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.Properties.Resources.resources
 D:\开发库\ShareProject\JmMind\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.csproj.GenerateResource.Cache
+D:\开发库\ShareProject\JmMind\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.UcMindMap.resources

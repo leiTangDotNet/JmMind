@@ -104,7 +104,7 @@ namespace JsmMind
         private Rectangle rectPlusBottom;
 
 
-        private SubjectBase parentSubject = null;
+        protected SubjectBase parentSubject = null;
 
         private List<SubjectBase> childSubjects = new List<SubjectBase>();
 
@@ -331,7 +331,7 @@ namespace JsmMind
             SubjectPicture subjectPicture = new SubjectPicture(url);
             this.subjectPictures.Add(subjectPicture);
             this.AdjustSubjectSize();
-        }
+        }  
 
         /// <summary>
         /// 获取主题显示总高度（所有子主题）
@@ -394,69 +394,49 @@ namespace JsmMind
             if (this.level == lv)
             {
                 return;
-            }
-
+            } 
             this.level = lv;
-            switch (this.level)
+
+            if (this.GetType() == typeof(TitleSubject))
             {
-                case 1:
-                    this.Width = 93;
-                    this.Height = 35;
-                    this.marginWidth = 20;
-                    this.marginHeight = 6;
-                    this.BackColor = Color.AliceBlue;
-                    this.ForeColor = Color.DimGray;
-                    this.BorderColor = Color.SteelBlue;
-                    this.Font = new Font("微软雅黑", 12.0f);
-                    this.Title = "主题";
-                    break;
-                case 2:
-                    this.Width = 83;
-                    this.Height = 25;
-                    this.marginWidth = 15;
-                    this.marginHeight = 3;
-                    this.BackColor = Color.Honeydew;
-                    this.ForeColor = Color.DimGray;
-                    this.BorderColor = Color.Green;
-                    this.Font = new Font("微软雅黑", 10.0f);
-                    this.Title = "子主题";
+                switch (this.level)
+                {
+                    case 1:
+                        this.Width = 93;
+                        this.Height = 35;
+                        this.marginWidth = 20;
+                        this.marginHeight = 6;
+                        this.BackColor = Color.AliceBlue;
+                        this.ForeColor = Color.DimGray;
+                        this.BorderColor = Color.SteelBlue;
+                        this.Font = new Font("微软雅黑", 12.0f);
+                        this.Title = "主题";
+                        break;
+                    case 2:
+                        this.Width = 83;
+                        this.Height = 25;
+                        this.marginWidth = 15;
+                        this.marginHeight = 3;
+                        this.BackColor = Color.Honeydew;
+                        this.ForeColor = Color.DimGray;
+                        this.BorderColor = Color.Green;
+                        this.Font = new Font("微软雅黑", 10.0f);
+                        this.Title = "子主题";
 
-                    break;
-                case 3:
-                    this.Width = 63;
-                    this.Height = 20;
-                    this.marginWidth = 5;
-                    this.marginHeight = 2;
-                    this.BackColor = Color.White;
-                    this.ForeColor = Color.DimGray;
-                    this.BorderColor = Color.Transparent;
-                    this.Font = new Font("微软雅黑", 8.0f);
-                    this.Title = "子主题"; 
-                    break; 
-                case 4:
-                    this.Width = 73;
-                    this.Height = 40;
-                    this.marginWidth = 20;
-                    this.marginHeight = 10;
-                    this.BackColor = Color.LightYellow;
-                    this.ForeColor = Color.DimGray;
-                    this.BorderColor = Color.Orange;
-                    this.Font = new Font("微软雅黑", 10.0f);
-                    this.Title = "附注";
-                    break;
-                default: 
-                    this.Width = 63;
-                    this.Height = 20;
-                    this.marginWidth = 5;
-                    this.marginHeight = 2;
-                    this.BackColor = Color.White;
-                    this.ForeColor = Color.DimGray;
-                    this.BorderColor = Color.Transparent;
-                    this.Font = new Font("微软雅黑", 8.0f);
-                    this.Title = "子主题";
-                    break;
-            }
-
+                        break;
+                    case 3:
+                        this.Width = 63;
+                        this.Height = 20;
+                        this.marginWidth = 5;
+                        this.marginHeight = 2;
+                        this.BackColor = Color.White;
+                        this.ForeColor = Color.DimGray;
+                        this.BorderColor = Color.Transparent;
+                        this.Font = new Font("微软雅黑", 8.0f);
+                        this.Title = "子主题";
+                        break;
+                }
+            } 
             foreach (SubjectBase childSubject in ChildSubjects)
             {
                 childSubject.SetTitleStyle();
@@ -677,8 +657,7 @@ namespace JsmMind
         public override void AdjustPosition()
         { 
             base.AdjustPosition(); 
-        }
-
+        } 
     }
     /// <summary>
     /// 主要主题
@@ -702,7 +681,30 @@ namespace JsmMind
             int index = fatherSubject.ChildSubjects.IndexOf(brotherSubject);
             fatherSubject.InsertSubject(this, index + (insertUp ? 0 : 1));
         }   
-    } 
+    }
+
+    /// <summary>
+    /// 附注
+    /// </summary>
+    [Serializable]
+    public class AttachSubject:SubjectBase
+    {  
+        public AttachSubject(SubjectBase fatherSubject)
+        { 
+            this.Width = 63;
+            this.Height = 30;
+            this.MarginWidth = 10;
+            this.MarginHeight = 5;
+            this.BackColor = Color.LightYellow;
+            this.ForeColor = Color.DimGray;
+            this.BorderColor = Color.Orange;
+            this.Font = new Font("微软雅黑", 10.0f);
+            this.Title = "附注";  
+
+            fatherSubject.InsertSubject(this, 0);  //默认插入到节点最上面
+        }
+    }
+
 
     #endregion
        
@@ -720,7 +722,10 @@ namespace JsmMind
         public delegate void SubjectEventHandler(object sender, SubjectBase e);
 
         [Description("Occurs after the Subject is double click")]
-        public event SubjectEventHandler SubjectDoubleClick;  
+        public event SubjectEventHandler SubjectDoubleClick;
+
+        [Description("Occurs after the Subject is double click")]
+        public event SubjectEventHandler SubjectClick; 
 		#endregion
 
 		#region Variables 
@@ -937,8 +942,19 @@ namespace JsmMind
         }
 		#endregion
 
-		#region Overrides
-		public override bool PreProcessMessage(ref Message msg)
+        #region Method
+
+
+        public void AddAttachNote(SubjectBase subject)
+        {
+            SubjectBase attachSubject = new AttachSubject(subject);
+            this.subjectNodes.Add(attachSubject);
+
+        }
+
+        #endregion
+        #region Overrides
+        public override bool PreProcessMessage(ref Message msg)
 		{
 			if (msg.Msg == WM_KEYDOWN)
             {
@@ -1043,7 +1059,9 @@ namespace JsmMind
                     if (subjectNode != null)
                     {
                         selectedSubject = subjectNode;
-                        
+                        if (SubjectClick != null)
+                            SubjectClick(this, subjectNode);
+
                         //拖拽开始
                         dragSubject = subjectNode.DeepClone();
                         dragSubject.TranslateLightColor();
@@ -1625,6 +1643,7 @@ namespace JsmMind
             return roundedRect;
         } 
 		#endregion
+        
 
         #region TextBoxEdit 
         void txtNode_Leave(object sender, EventArgs e)
@@ -1695,6 +1714,7 @@ namespace JsmMind
             int height = r.Height - (r.Top < headerBuffer ? headerBuffer - r.Top : 0);
             txtNode.Location = new Point(left, top);
 
+            txtNode.MinimumSize = new System.Drawing.Size(r.Width - 6, height);
             txtNode.Font = subject.Font;
             txtNode.Multiline = false;
             txtNode.ClientSize = new Size(r.Width - 6, height);
@@ -1858,8 +1878,7 @@ namespace JsmMind
             }
             return rs;
         }
-  
-
+   
         private bool SubjectInCenterArea(MouseEventArgs e)
         {
             SubjectBase taskEvent = centerProject;
