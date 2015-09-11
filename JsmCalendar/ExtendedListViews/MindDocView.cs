@@ -60,6 +60,11 @@ namespace JsmMind
         private Rectangle rectAreas;
         private Rectangle rectCollapse;
 
+        private Rectangle rectPlusLeft; 
+        private Rectangle rectPlusTop; 
+        private Rectangle rectPlusRight; 
+        private Rectangle rectPlusBottom;
+
 
         private SubjectBase parentSubject = null;
 
@@ -140,7 +145,7 @@ namespace JsmMind
             {
                 topSubject.AdjustPosition();
             }
-        }
+        } 
 
         /// <summary>
         /// 移动主题位置
@@ -206,6 +211,34 @@ namespace JsmMind
                 this.parentSubject.AdjustPosition();
         }
 
+        /// <summary>
+        /// 插入主题
+        /// </summary>
+        /// <param name="subject"></param>
+        public void InsertSubject(SubjectBase subject,int position)
+        { 
+            subject.parentSubject = this;
+            subject.SetTitleStyle();
+
+            if (!this.childSubjects.Contains(subject))
+            {
+                if (this.childSubjects.Count == 0 || position >= this.childSubjects.Count || position<0)
+                {
+                    this.childSubjects.Add(subject); 
+                }
+                else
+                {
+                    this.childSubjects.Insert(position, subject);
+                }
+                this.AdjustPosition();
+
+                SubjectBase topSubject = this.GetTopSubect();
+                if (topSubject != null)
+                {
+                    topSubject.AdjustPosition();
+                } 
+            }  
+        }
         /// <summary>
         /// 获取主题显示总高度（所有子主题）
         /// </summary>
@@ -441,7 +474,27 @@ namespace JsmMind
             set { rectCollapse = value; }
         }
 
-
+        public Rectangle RectPlusLeft
+        {
+            get { return rectPlusLeft; }
+            set { rectPlusLeft = value; }
+        }
+        public Rectangle RectPlusTop
+        {
+            get { return rectPlusTop; }
+            set { rectPlusTop = value; }
+        }
+        public Rectangle RectPlusRight
+        {
+            get { return rectPlusRight; }
+            set { rectPlusRight = value; }
+        }
+        public Rectangle RectPlusBottom
+        {
+            get { return rectPlusBottom; }
+            set { rectPlusBottom = value; }
+        }
+         
         public SubjectBase ParentSubject
         {
             get { return parentSubject; }
@@ -456,20 +509,7 @@ namespace JsmMind
                 }
 
                 parentSubject = value;
-                SetTitleStyle(); 
-                if (!parentSubject.childSubjects.Contains(this))
-                {
-                    parentSubject.childSubjects.Add(this);
-                    parentSubject.AdjustPosition();
-
-                    SubjectBase topSubject = parentSubject.GetTopSubect();
-                    if(topSubject!=null)
-                    {
-                        topSubject.AdjustPosition();
-                    }
-
-
-                }
+                parentSubject.InsertSubject(this,parentSubject.childSubjects.Count);
             }
         }
 
@@ -479,6 +519,8 @@ namespace JsmMind
             set { childSubjects = value; }
         }
         #endregion
+
+
     }
 
     /// <summary>
@@ -519,6 +561,17 @@ namespace JsmMind
             this.ParentSubject = fatherSubject; 
         }
 
+        public TitleSubject(SubjectBase brotherSubject,bool insertUp)
+        {
+            SubjectBase fatherSubject = brotherSubject.ParentSubject;
+            if (fatherSubject == null)
+            {
+                return;
+            }
+
+            int index = fatherSubject.ChildSubjects.IndexOf(brotherSubject);
+            fatherSubject.InsertSubject(this, index + (insertUp ? 0 : 1));
+        }   
     } 
 
     #endregion
@@ -577,6 +630,8 @@ namespace JsmMind
         private SubjectBase dragSubject = null;
         private int dragStartPx = 0;
         private int dragStartPy = 0;
+         
+        private int selectPlus = 0;  //1,2,3,4分别表示Lef,Top,Right,Bottom,0表示未选中
 
         private Color tempBackColor;
         private Color tempForeColor;
@@ -795,45 +850,59 @@ namespace JsmMind
             {   
                 if (e.Y > headerBuffer) //点击标题以下区域，选择任务事件
                 { 
-                    bool addTitle = true;
-                    if (addTitle && e.Clicks == 2)
+                    //是否点击扩展按钮
+                    if (selectedSubject != null)
                     {
-                        SubjectBase subject = null;
-                        if (SubjectInCenterArea(e))
+                        int plus = PlusInArea(e, selectedSubject);
+                        if (plus > 0)
                         {
-                            subject = new TitleSubject(centerProject);
+                            SubjectBase subject = null;
+                            switch (plus)
+                            {
+                                case 1:
+                                    subject = new TitleSubject(selectedSubject);
+                                    break;
+                                case 2:
+                                    subject = new TitleSubject(selectedSubject,true);
+                                    break;
+                                case 3:
+                                    subject = new TitleSubject(selectedSubject);
+                                    break;
+                                case 4:
+                                    subject = new TitleSubject(selectedSubject,false);
+                                    break;
+                            }
+                            if (subject != null)
+                            {
+                                subjectNodes.Add(subject);
+                                selectedSubject = subject;
+                            }
+                            Invalidate();
+                            return;
                         }
-                        else if (SubjectInArea(e) != null)
-                        {
-                            SubjectBase clickSubject = SubjectInArea(e);
-                            subject = new TitleSubject(clickSubject);
-                        }
-                        else
-                        {
-                            //浮动标题
-                            //subject = new TitleBatchSubject();
-                            //subject.CenterPoint = new Point(e.X, e.Y); 
-                        }
-                        if(subject!=null)
-                            subjectNodes.Add(subject);
                     }
 
+                    //是否点击折叠按钮
+                    SubjectBase collaspSubject = CollaspeInArea(e);
+                    if (collapseSubject != null)
+                    {
+                        collapseSubject.CollapseChildSubject(!collapseSubject.Expanded);
+                        Invalidate();
+                        return;
+                    } 
+
+                    //是否选中主题
                     selectedSubject = null;
                     SubjectBase subjectNode = SubjectInArea(e);
                     if (subjectNode != null)
                     {
                         selectedSubject = subjectNode;
-
+                        
+                        //拖拽开始
                         dragSubject = subjectNode.DeepClone();
                         dragSubject.TranslateLightColor();
                         dragStartPx = e.X;
                         dragStartPy = e.Y;
-                    }
-
-                    SubjectBase collaspSubject = CollaspeInArea(e);
-                    if(collapseSubject!=null)
-                    {
-                        collapseSubject.CollapseChildSubject(!collapseSubject.Expanded);
                     }
                 } 
                 Invalidate();
@@ -843,9 +912,10 @@ namespace JsmMind
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-             
+
             activeSubject = null;
             collapseSubject = null;
+            selectPlus = 0;
             if (e.Y > headerBuffer)
             { 
                 //处理拖拽主题
@@ -873,14 +943,14 @@ namespace JsmMind
                     }
 
                 }
-                else //处理鼠标移动活动主题和折叠按钮
+                else //处理鼠标移动活动主题,扩展按钮和折叠按钮
                 {
                     SubjectBase subjectNode = SubjectInArea(e);
                     if (subjectNode != null)
                     {
                         activeSubject = subjectNode; 
                     }
-                    else
+                    else if (CollaspeInArea(e) != null)
                     {
                         subjectNode = CollaspeInArea(e);
                         if (subjectNode != null)
@@ -888,6 +958,15 @@ namespace JsmMind
                             collapseSubject = subjectNode;
                         }
                     }
+                    else
+                    {
+                        if (selectedSubject != null)
+                        {
+                            int plus = PlusInArea(e, selectedSubject); 
+                            selectPlus = plus;
+                        }
+                    }
+                     
                 }
 
                 Invalidate();
@@ -1157,7 +1236,7 @@ namespace JsmMind
                 Rectangle activeArea = new Rectangle(sr.Left - 3, sr.Top - 6, sr.Width + 7, sr.Height + 10);
 
                 //绘制扩展
-                RenderPlus(g, activeArea);
+                RenderPlus(g, activeArea,subject);
 
                 //绘制边框和背景
                 FillRoundRectangle(g, new SolidBrush(subject.SelectColor), activeArea, radius);
@@ -1225,40 +1304,60 @@ namespace JsmMind
             DrawRoundLine(g, penLine, rect, roration, direction);
         }
 
-        private void RenderPlus(Graphics g,Rectangle area)
+        private void RenderPlus(Graphics g, Rectangle area, SubjectBase subject)
         {
             Rectangle sr = new Rectangle(area.Left - 10, area.Top - 10, area.Width + 20, area.Height + 20);
-            g.Clip = new Region(sr); 
+            g.Clip = new Region(sr);
 
             Pen penPlus = new Pen(new SolidBrush(Color.White), 2.0f);
 
-            Rectangle pmLeft = new Rectangle(area.Left - 8, area.Top + area.Height / 2 - 10,40,20);
-            g.FillEllipse(new SolidBrush(Color.SteelBlue), pmLeft);
+            Rectangle pmLeft = new Rectangle(area.Left - 8, area.Top + area.Height / 2 - 10, 40, 20);
+            subject.RectPlusLeft = pmLeft;
+            RenderPlusLeft(g, pmLeft, penPlus, selectPlus == 1 ? Color.LightSteelBlue : Color.SteelBlue);
 
-            g.DrawLine(penPlus, pmLeft.Left + 2, pmLeft.Top + pmLeft.Height / 2, pmLeft.Left + 8, pmLeft.Top + pmLeft.Height / 2);
-            g.DrawLine(penPlus, pmLeft.Left + 5, pmLeft.Top + pmLeft.Height / 2-3, pmLeft.Left + 5, pmLeft.Top + pmLeft.Height / 2+3);
-
-            Rectangle pmRight = new Rectangle(area.Left+area.Width-(40-8)-1, area.Top + area.Height / 2 - 10, 40, 20);
-            g.FillEllipse(new SolidBrush(Color.SteelBlue), pmRight);
-
-            g.DrawLine(penPlus, pmRight.Right - 8, pmRight.Top + pmRight.Height / 2, pmRight.Right -2, pmRight.Top + pmRight.Height / 2);
-            g.DrawLine(penPlus, pmRight.Right - 5, pmRight.Top + pmRight.Height / 2-3, pmRight.Right - 5, pmRight.Top + pmRight.Height / 2+3);
+            Rectangle pmTop = new Rectangle(area.Left + area.Width / 2 - 10, area.Top - 8, 20, 40);
+            subject.RectPlusTop = pmTop;
+            RenderPlusTop(g, pmTop, penPlus, selectPlus == 2 ? Color.LightSteelBlue : Color.SteelBlue);
 
 
-            Rectangle pmTop = new Rectangle(area.Left + area.Width/2-10, area.Top - 8, 20, 40);
-            g.FillEllipse(new SolidBrush(Color.SteelBlue), pmTop);
+            Rectangle pmRight = new Rectangle(area.Left + area.Width - (40 - 8) - 1, area.Top + area.Height / 2 - 10, 40, 20);
+            subject.RectPlusRight = pmRight;
+            RenderPlusRight(g, pmRight, penPlus, selectPlus == 3 ? Color.LightSteelBlue : Color.SteelBlue);
+
              
-            g.DrawLine(penPlus, pmTop.Left + 7, pmTop.Top + 5, pmTop.Left + 13, pmTop.Top + 5);
-            g.DrawLine(penPlus, pmTop.Left + 10, pmTop.Top + 2, pmTop.Left + 10, pmTop.Top + 8);
-
-
-            Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - 10, area.Top +area.Height-(40-8)-1, 20, 40);
-            g.FillEllipse(new SolidBrush(Color.SteelBlue), pmBottom);
-
-            g.DrawLine(penPlus, pmBottom.Left + 7, pmBottom.Bottom -5, pmBottom.Left + 13, pmBottom.Bottom -5);
-            g.DrawLine(penPlus, pmBottom.Left + 10, pmBottom.Bottom - 2, pmBottom.Left + 10, pmBottom.Bottom - 8);
-
+            Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - 10, area.Top + area.Height - (40 - 8) - 1, 20, 40);
+            subject.RectPlusBottom = pmBottom;
+            RenderPlusBottom(g, pmBottom, penPlus, selectPlus == 4 ? Color.LightSteelBlue : Color.SteelBlue);
         }
+
+        private void RenderPlusLeft(Graphics g, Rectangle pmLeft, Pen penPlus, Color backColr)
+        {
+            g.FillEllipse(new SolidBrush(backColr), pmLeft);
+            g.DrawLine(penPlus, pmLeft.Left + 2, pmLeft.Top + pmLeft.Height / 2, pmLeft.Left + 8, pmLeft.Top + pmLeft.Height / 2);
+            g.DrawLine(penPlus, pmLeft.Left + 5, pmLeft.Top + pmLeft.Height / 2 - 3, pmLeft.Left + 5, pmLeft.Top + pmLeft.Height / 2 + 3);
+        }
+
+        private void RenderPlusRight(Graphics g, Rectangle pmRight, Pen penPlus, Color backColr)
+        {
+            g.FillEllipse(new SolidBrush(backColr), pmRight);
+            g.DrawLine(penPlus, pmRight.Right - 8, pmRight.Top + pmRight.Height / 2, pmRight.Right - 2, pmRight.Top + pmRight.Height / 2);
+            g.DrawLine(penPlus, pmRight.Right - 5, pmRight.Top + pmRight.Height / 2 - 3, pmRight.Right - 5, pmRight.Top + pmRight.Height / 2 + 3); 
+        }
+
+        private void RenderPlusTop(Graphics g, Rectangle pmTop, Pen penPlus, Color backColr)
+        {
+            g.FillEllipse(new SolidBrush(backColr), pmTop);
+            g.DrawLine(penPlus, pmTop.Left + 7, pmTop.Top + 5, pmTop.Left + 13, pmTop.Top + 5);
+            g.DrawLine(penPlus, pmTop.Left + 10, pmTop.Top + 2, pmTop.Left + 10, pmTop.Top + 8); 
+        }
+
+        private void RenderPlusBottom(Graphics g, Rectangle pmBottom, Pen penPlus, Color backColr)
+        {
+            g.FillEllipse(new SolidBrush(backColr), pmBottom);
+            g.DrawLine(penPlus, pmBottom.Left + 7, pmBottom.Bottom - 5, pmBottom.Left + 13, pmBottom.Bottom - 5);
+            g.DrawLine(penPlus, pmBottom.Left + 10, pmBottom.Bottom - 2, pmBottom.Left + 10, pmBottom.Bottom - 8); 
+        }
+
           
         private void DrawRoundRectangle(Graphics g, Pen pen, Rectangle rect, int cornerRadius)
         {
@@ -1617,6 +1716,36 @@ namespace JsmMind
                 }
             }
             return null;
+        }
+
+        private int PlusInArea(MouseEventArgs e,SubjectBase taskEvent)
+        {
+            selectPlus = 0;
+            Rectangle r = taskEvent.RectPlusLeft;
+            if (r.Left <= e.X && r.Left + r.Width >= e.X
+                    && r.Top <= e.Y && r.Top + r.Height >= e.Y)
+            {
+                selectPlus = 1; 
+            }
+            r = taskEvent.RectPlusTop;
+            if (r.Left <= e.X && r.Left + r.Width >= e.X
+                    && r.Top <= e.Y && r.Top + r.Height >= e.Y)
+            {
+                selectPlus = 2; 
+            }
+            r = taskEvent.RectPlusRight;
+            if (r.Left <= e.X && r.Left + r.Width >= e.X
+                    && r.Top <= e.Y && r.Top + r.Height >= e.Y)
+            {
+                selectPlus = 3; 
+            }
+            r = taskEvent.RectPlusBottom;
+            if (r.Left <= e.X && r.Left + r.Width >= e.X
+                    && r.Top <= e.Y && r.Top + r.Height >= e.Y)
+            {
+                selectPlus = 4; 
+            }
+            return selectPlus;
         }
 	 
 
