@@ -80,19 +80,19 @@ namespace JsmMind
         private Color borderColor = Color.Green;
         private Color selectColor = Color.SteelBlue;
         private Color activeColor = Color.LightSteelBlue;
-         
-        private Point centerPoint = new Point(0, 0);
-        private int width = 0;
-        private int height = 0;
-        private int marginWidth = 20; 
-        private int marginHeight = 10;
 
+        protected Point centerPoint = new Point(0, 0);
+        protected int width = 0;
+        protected int height = 0;
+        protected int marginWidth = 20;
+        protected int marginHeight = 10;
+        protected int branchLinkWidth = 30;
+        protected int branchSplitHeight = 12;
 
-        private int branchLinkWidth = 30;
-        private int branchSplitHeight = 12;
+        protected int leftBuffer = 30;
 
-        private bool expanded = true; 
-        private bool visible = true;
+        protected bool expanded = true;
+        protected bool visible = true;
         private Rectangle rectAreas;
         private Rectangle rectTitle;
          
@@ -105,13 +105,18 @@ namespace JsmMind
 
 
         protected SubjectBase parentSubject = null;
-
-        private List<SubjectBase> childSubjects = new List<SubjectBase>();
-
-        private List<SubjectPicture> subjectPictures = new List<SubjectPicture>();
+        protected SubjectBase relateSubject = null;
 
 
+        protected List<SubjectBase> childSubjects = new List<SubjectBase>();
 
+        protected List<SubjectPicture> subjectPictures = new List<SubjectPicture>();
+
+        private int moveX = -10000;
+
+        protected int scalceWidth = 0;
+
+         
         public SubjectBase DeepClone()
         {
             System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
@@ -156,20 +161,39 @@ namespace JsmMind
             {
                 SubjectBase childSubject = this.ChildSubjects[i];
                 hs = childSubject.GetTotalHeight();
-                int x = this.CenterPoint.X + (this.Width / 2) + this.BranchLinkWidth + childSubject.width / 2 + 30;
-                 
-                if(childSubject.CenterPoint.X>x)
+                int x =  childSubject.centerPoint.X + childSubject.moveX; 
+                if (childSubject.moveX==-10000) 
                 {
-                    x = childSubject.centerPoint.X;
-                }
-                int y = top + hs / 2;
-                childSubject.CenterPoint = new Point(x, y);
+                    x = this.CenterPoint.X + (this.Width / 2) + this.BranchLinkWidth + childSubject.width / 2 + childSubject.leftBuffer;
 
-                top = top + hs+ hb;
+                    if(childSubject.relateSubject!=null) //和关联节点同一位置
+                    {
+                        x = childSubject.relateSubject.centerPoint.X + childSubject.width / 2;
+                    }
+                } 
+                int y = top + hs / 2;
+
+                if(childSubject.GetType()==typeof(AttachSubject))
+                { 
+
+                } 
+                childSubject.CenterPoint = new Point(x, y);
+                
+                top = top + hs + hb;
+                 
+                foreach(SubjectBase chidsub in childSubject.childSubjects)
+                {
+                    chidsub.moveX = childSubject.moveX + childSubject.scalceWidth;
+                }
+                childSubject.moveX = 0;
+                childSubject.scalceWidth = 0;
                 childSubject.AdjustPosition();
-            } 
+            }
         }
 
+        /// <summary>
+        /// 调整主题大小
+        /// </summary>
         public void AdjustSubjectSize()
         {
             Image bmp=new Bitmap(200,200);
@@ -194,10 +218,12 @@ namespace JsmMind
             {
                 h = (int)size.Height;
             }
-
+            int dx = (this.marginWidth + w + this.marginWidth - this.width)/2;
+            int dy = (this.marginHeight + h + this.marginHeight - this.height)/2;
             this.width = this.marginWidth + w + this.marginWidth;
             this.height = this.marginHeight + h + this.marginHeight;
-
+            this.moveX = dx;
+            this.scalceWidth = dx;  //增加宽度
             if(this.parentSubject!=null)
             {
                 this.parentSubject.AdjustPosition();
@@ -233,8 +259,7 @@ namespace JsmMind
         /// </summary>
         /// <param name="movePoint">移动后的中心位置</param>
         public virtual void MoveSubjectPosition(Point movePoint)
-        { 
-
+        {  
             //控制移动范围
             if(this.parentSubject!=null)
             {
@@ -283,10 +308,21 @@ namespace JsmMind
 
                 }
 
-                movePoint.Y = this.CenterPoint.Y;
+                if(this.GetType()== typeof(TitleSubject))
+                { 
+                    movePoint.Y = this.CenterPoint.Y;
+                }
             } 
             //是否拖拽到其他其他节点
-            this.CenterPoint = new Point(movePoint.X, movePoint.Y);
+            int dX = movePoint.X - this.centerPoint.X;
+            int dY = movePoint.Y - this.centerPoint.Y;
+            this.CenterPoint = new Point(movePoint.X, movePoint.Y); 
+            foreach(SubjectBase childSub in this.childSubjects)
+            {
+                childSub.moveX = dX;
+            } 
+            this.moveX = 0;
+
             this.AdjustPosition();   
             if(this.parentSubject!=null)
                 this.parentSubject.AdjustPosition();
@@ -337,7 +373,7 @@ namespace JsmMind
         /// 获取主题显示总高度（所有子主题）
         /// </summary>
         /// <returns></returns>
-        public int GetTotalHeight()
+        public virtual int GetTotalHeight()
         {
             int hb = 0;
             if(this.childSubjects.Count<1 || this.expanded==false)
@@ -615,6 +651,11 @@ namespace JsmMind
             }
         }
 
+        public SubjectBase RelateSubject
+        {
+            get { return relateSubject; }
+            set { relateSubject = value; }
+        }
         public List<SubjectBase> ChildSubjects
         {
             get { return childSubjects; }
@@ -625,6 +666,11 @@ namespace JsmMind
         {
             get { return subjectPictures; }
             set { subjectPictures = value; }
+        } 
+        public int MoveX
+        {
+            get { return moveX; }
+            set { moveX = value; }
         }
         #endregion
 
@@ -652,11 +698,6 @@ namespace JsmMind
             this.BranchSplitHeight=24;
 
             this.level = 0;
-        }
-
-        public override void AdjustPosition()
-        { 
-            base.AdjustPosition(); 
         } 
     }
     /// <summary>
@@ -689,7 +730,7 @@ namespace JsmMind
     [Serializable]
     public class AttachSubject:SubjectBase
     {  
-        public AttachSubject(SubjectBase fatherSubject)
+        public AttachSubject(SubjectBase subject)
         { 
             this.Width = 63;
             this.Height = 30;
@@ -699,9 +740,37 @@ namespace JsmMind
             this.ForeColor = Color.DimGray;
             this.BorderColor = Color.Orange;
             this.Font = new Font("微软雅黑", 10.0f);
-            this.Title = "附注";  
+            this.Title = "附注"; 
+            //插入兄弟主题
+            SubjectBase fatherSubject = subject.ParentSubject;
+            if(fatherSubject!=null)
+            {
+                this.relateSubject = subject;
+                int index = fatherSubject.ChildSubjects.IndexOf(subject); 
+                fatherSubject.InsertSubject(this, index); //默认插入到关联主题的上面
+            }
 
-            fatherSubject.InsertSubject(this, 0);  //默认插入到节点最上面
+        }
+         
+        /// <summary>
+        /// 获取主题显示总高度（所有子主题）
+        /// </summary>
+        /// <returns></returns>
+        public override int GetTotalHeight()
+        { 
+            int hb=base.GetTotalHeight();
+            SubjectBase relateSubject = this.relateSubject;
+            if(this.MoveX!=-10000)
+            {
+                int hd = Math.Abs(this.CenterPoint.Y - relateSubject.CenterPoint.Y) - this.ParentSubject.BranchSplitHeight-2;
+                if (hb < hd)
+                {
+                    hb = hd;
+                }
+
+            }
+          
+            return hb;
         }
     }
 
@@ -1035,13 +1104,17 @@ namespace JsmMind
                             Invalidate();
                             return;
                         }
-                        //是否点击标题
-                        if (TitleInArea(e, selectedSubject))
-                        {
-                            txtNode.Tag = selectedSubject;
-                            ShowTxtBox();
-                            return;
-                        } 
+
+                        if(e.Clicks==2)
+                        { 
+                            //是否点击标题
+                            if (TitleInArea(e, selectedSubject))
+                            {
+                                txtNode.Tag = selectedSubject;
+                                ShowTxtBox();
+                                return;
+                            } 
+                        }
                     }
 
                     //是否点击折叠按钮
@@ -1135,11 +1208,11 @@ namespace JsmMind
 
                         if (TitleInArea(e, selectedSubject))  //鼠标是否移动到标题上
                         {
-                            Cursor.Current = Cursors.IBeam;
+                            //Cursor.Current = Cursors.IBeam;
                         }
                         else
                         { 
-                            Cursor.Current = Cursors.Default;
+                            //Cursor.Current = Cursors.Default;
                         }
                     }
                      
@@ -1289,7 +1362,8 @@ namespace JsmMind
             }
 
             //开始绘制
-            g.SmoothingMode = SmoothingMode.AntiAlias; 
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
             //1.绘制连接线 
             if (subjectNode.ParentSubject != null)
             {
@@ -1300,7 +1374,7 @@ namespace JsmMind
 
             //3.绘制主题内容  
             RenderSubjectTitle(g, r, subjectNode);
-             
+
             g.SmoothingMode = SmoothingMode.Default; 
         }
 
@@ -1331,30 +1405,22 @@ namespace JsmMind
 
             g.SmoothingMode = SmoothingMode.Default;
         }
-         
-         
+
+
         private void RenderSubjectParentLink(Graphics g, Rectangle r, SubjectBase subject)
         {
-            if (subject.ParentSubject == null) return; 
+            if (subject.ParentSubject == null) return;
             g.Clip = new System.Drawing.Region(r);
-            SubjectBase parentSubject = subject.ParentSubject;
-
-            int branchLinkWidth = parentSubject.BranchLinkWidth;
-
-            Pen penLine = new Pen(subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor, 1.0f);
-            if(mapViewModel== MapViewModel.ExpandTwoSides)
+            if (mapViewModel == MapViewModel.ExpandTwoSides)
             {
-                //父主题连接线起始点
-                int x1 = parentSubject.RectAreas.Left + parentSubject.RectAreas.Width;
-                int y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height / 2;
-                //父主题分支连接点
-                int x2 = x1 + branchLinkWidth;
-                int y2 = y1;
-                //子主体连接线起始点
-                int x3 = subject.RectAreas.Left;
-                int y3 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
-
-                RenderLink(g, r,penLine, x2, y2, x3, y3);
+                if (subject.GetType() == typeof(AttachSubject))
+                {
+                    RenderLinkAttach(g, r, subject);
+                }
+                else
+                {
+                    RenderLinkBranch(g, r, subject);
+                }
             }
         }
 
@@ -1426,8 +1492,16 @@ namespace JsmMind
                 g.FillRectangle(Brushes.White, sr.Left - 1, sr.Top - 1, sr.Width + 2, sr.Height + 2);
             }
 
-            FillRoundRectangle(g, new SolidBrush(subject.BackColor), sr, radius);
-            DrawRoundRectangle(g, p, sr, radius);
+            if(subject.GetType()== typeof(AttachSubject))
+            {
+                FillAttachRectangle(g, new SolidBrush(subject.BackColor), sr, radius);
+                DrawAttachRectangle(g, p, sr, radius);
+            }
+            else
+            {
+                FillRoundRectangle(g, new SolidBrush(subject.BackColor), sr, radius);
+                DrawRoundRectangle(g, p, sr, radius);
+            }
 
             //绘制图像
             int lb = subject.MarginWidth;
@@ -1453,15 +1527,24 @@ namespace JsmMind
             subject.RectTitle = srTitle; 
         }
 
-        private void RenderLink(Graphics g, Rectangle r, Pen penLine, int x1, int y1, int x2, int y2)
+        private void RenderLinkBranch(Graphics g, Rectangle r,SubjectBase subject)
         {
+            Pen penLine = new Pen(subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor, 1.0f);
+            SubjectBase parentSubject = subject.ParentSubject; 
+            int branchLinkWidth = parentSubject.BranchLinkWidth;
+
+            //父主题分支连接点
+            int x1 = parentSubject.RectAreas.Left + parentSubject.RectAreas.Width + branchLinkWidth;
+            int y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height / 2; 
+            //子主体连接线起始点
+            int x2 = subject.RectAreas.Left;
+            int y2 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
+             
             if (x1 == x2 || y1 == y2)
             {
                 g.DrawLine(penLine, x1, y1, x2, y2);
                 return;
-            }
-
-
+            } 
             Rectangle rect = new Rectangle(x1, y1, x2 - x1, y2 - y1);
             //直线绘制方向(0,1,2,3分别表示以矩形左上角开始从哪一个点绘制
             int direction = 0;
@@ -1497,6 +1580,85 @@ namespace JsmMind
             if (roration < 4) roration = 4;
             DrawRoundLine(g, penLine, rect, roration, direction);
         }
+        private void RenderLinkAttach(Graphics g, Rectangle r, SubjectBase subject)
+        {
+            Pen penLine = new Pen(subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor, 1.0f);
+            SubjectBase relateSubject =subject.RelateSubject;
+            //管理主题中心点
+            int x1 = relateSubject.CenterPoint.X;
+            int y1 = relateSubject.CenterPoint.Y;
+
+            int x2 = subject.CenterPoint.X;
+            int y2 = subject.CenterPoint.Y;
+
+
+            int xa = 0;
+            int ya = 0;
+            int xb = 0;
+            int yb = 0;
+            int xc = 0;
+            int yc = 0;
+            if (x1 < x2)
+            {
+                if (y1 < y2)
+                {
+                    xa = x1;
+                    ya = y1 + relateSubject.Height/2+2;
+
+                    xb = x2-5;
+                    yb = y2-subject.Height/2;
+
+                    xc = xb + 10;
+                    yc = yb;
+                }
+                else
+                {
+                    xa = x1;
+                    ya = y1-relateSubject.Height/2;
+
+                    xb = x2-5;
+                    yb = y2+subject.Height/2;
+
+                    xc = xb + 10;
+                    yc = yb;
+                }
+            }
+            else
+            {
+                if (y1 < y2)
+                {
+                    xa = x1;
+                    ya = y1+relateSubject.Height/2+2;
+
+                    xb = x2+5;
+                    yb = y2 - subject.Height/2;
+
+
+                    xc = xb - 10;
+                    yc = yb;
+                }
+                else
+                {
+                    xa = x1;
+                    ya = y1-relateSubject.Height/2;
+
+                    xb = x2+5;
+                    yb = y2 +subject.Height/2;
+
+                    xc = xb - 10;
+                    yc = yb;
+                }
+
+            } 
+            //g.DrawLine(penLine, xa, ya, xb, yb);
+
+
+            GraphicsPath roundedRect = new GraphicsPath();
+            roundedRect.AddLine(xa, ya, xb, yb);
+            roundedRect.AddLine(xa, ya, xc, yc);
+            roundedRect.CloseFigure();
+            g.DrawPath(penLine, roundedRect);
+        }
 
         private void RenderPlus(Graphics g, Rectangle area, SubjectBase subject)
         {
@@ -1509,19 +1671,24 @@ namespace JsmMind
             subject.RectPlusLeft = new Rectangle(pmLeft.Left,pmLeft.Top,pmLeft.Width/2,pmLeft.Height);
             RenderPlusLeft(g, pmLeft, penPlus, selectPlus == 1 ? Color.LightSteelBlue : Color.SteelBlue);
 
-            Rectangle pmTop = new Rectangle(area.Left + area.Width / 2 - 10, area.Top - 8, 20, 40);
-            subject.RectPlusTop = new Rectangle(pmTop.Left, pmTop.Top, pmTop.Width, pmTop.Height / 2);
-            RenderPlusTop(g, pmTop, penPlus, selectPlus == 2 ? Color.LightSteelBlue : Color.SteelBlue);
-
+            if(subject.GetType()==typeof(TitleSubject))
+            { 
+                Rectangle pmTop = new Rectangle(area.Left + area.Width / 2 - 10, area.Top - 8, 20, 40);
+                subject.RectPlusTop = new Rectangle(pmTop.Left, pmTop.Top, pmTop.Width, pmTop.Height / 2);
+                RenderPlusTop(g, pmTop, penPlus, selectPlus == 2 ? Color.LightSteelBlue : Color.SteelBlue); 
+            }
 
             Rectangle pmRight = new Rectangle(area.Left + area.Width - (40 - 8) - 1, area.Top + area.Height / 2 - 10, 40, 20);
             subject.RectPlusRight = new Rectangle(pmRight.Left + pmRight.Width / 2, pmRight.Top, pmRight.Width / 2, pmRight.Height);
             RenderPlusRight(g, pmRight, penPlus, selectPlus == 3 ? Color.LightSteelBlue : Color.SteelBlue);
 
-             
-            Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - 10, area.Top + area.Height - (40 - 8) - 1, 20, 40);
-            subject.RectPlusBottom = new Rectangle(pmBottom.Left, pmBottom.Top + pmBottom.Height / 2, pmBottom.Width, pmBottom.Height / 2);
-            RenderPlusBottom(g, pmBottom, penPlus, selectPlus == 4 ? Color.LightSteelBlue : Color.SteelBlue);
+
+            if (subject.GetType() == typeof(TitleSubject))
+            {
+                Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - 10, area.Top + area.Height - (40 - 8) - 1, 20, 40);
+                subject.RectPlusBottom = new Rectangle(pmBottom.Left, pmBottom.Top + pmBottom.Height / 2, pmBottom.Width, pmBottom.Height / 2);
+                RenderPlusBottom(g, pmBottom, penPlus, selectPlus == 4 ? Color.LightSteelBlue : Color.SteelBlue);
+            }
         }
 
         private void RenderPlusLeft(Graphics g, Rectangle pmLeft, Pen penPlus, Color backColr)
@@ -1552,7 +1719,31 @@ namespace JsmMind
             g.DrawLine(penPlus, pmBottom.Left + 10, pmBottom.Bottom - 2, pmBottom.Left + 10, pmBottom.Bottom - 8); 
         }
 
-          
+        private void DrawAttachRectangle(Graphics g, Pen pen, Rectangle rect, int cornerRadius)
+        {
+            using (GraphicsPath path = CreateRoundedRectanglePath(rect, cornerRadius))
+            {
+                g.DrawPath(pen, path);
+                int edge = cornerRadius * 2;
+
+                Rectangle rectEdge = new Rectangle(rect.Right - edge, rect.Top, edge, edge);
+                //绘制附注主题的折叠区域
+                g.FillRectangle(Brushes.White,rectEdge.Left,rectEdge.Top-1,rectEdge.Width+1,rectEdge.Height);
+
+                g.DrawLine(pen, rectEdge.Left, rectEdge.Top, rectEdge.Left, rectEdge.Bottom);
+                g.DrawLine(pen, rectEdge.Left, rectEdge.Top, rectEdge.Right, rectEdge.Bottom);
+                g.DrawLine(pen, rectEdge.Left, rectEdge.Bottom, rectEdge.Right, rectEdge.Bottom);  
+            }
+        }
+
+        private void FillAttachRectangle(Graphics g, Brush brush, Rectangle rect, int cornerRadius)
+        {
+            using (GraphicsPath path = CreateRoundedRectanglePath(rect, cornerRadius/2))
+            {
+                g.FillPath(brush, path); 
+            }
+        }
+
         private void DrawRoundRectangle(Graphics g, Pen pen, Rectangle rect, int cornerRadius)
         {
             using (GraphicsPath path = CreateRoundedRectanglePath(rect, cornerRadius))
@@ -1560,6 +1751,7 @@ namespace JsmMind
                 g.DrawPath(pen, path);
             }
         }
+
         private void FillRoundRectangle(Graphics g, Brush brush, Rectangle rect, int cornerRadius)
         {
             using (GraphicsPath path = CreateRoundedRectanglePath(rect, cornerRadius))
