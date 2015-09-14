@@ -60,6 +60,9 @@
             this.toolBtnAttachNote = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.toolBtnRemark = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolBtnRelate = new System.Windows.Forms.ToolStripButton();
+            this.toolCbZoom = new System.Windows.Forms.ToolStripComboBox();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -324,7 +327,10 @@
             this.toolStripSeparator4,
             this.toolBtnAttachNote,
             this.toolStripSeparator5,
-            this.toolBtnRemark});
+            this.toolBtnRemark,
+            this.toolStripSeparator6,
+            this.toolBtnRelate,
+            this.toolCbZoom});
             this.toolStrip2.Location = new System.Drawing.Point(0, 0);
             this.toolStrip2.Name = "toolStrip2";
             this.toolStrip2.Size = new System.Drawing.Size(927, 25);
@@ -367,6 +373,35 @@
             this.toolBtnRemark.Size = new System.Drawing.Size(52, 22);
             this.toolBtnRemark.Text = "备注";
             this.toolBtnRemark.Click += new System.EventHandler(this.toolBtnRemark_Click);
+            // 
+            // toolStripSeparator6
+            // 
+            this.toolStripSeparator6.Name = "toolStripSeparator6";
+            this.toolStripSeparator6.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolBtnRelate
+            // 
+            this.toolBtnRelate.Image = ((System.Drawing.Image)(resources.GetObject("toolBtnRelate.Image")));
+            this.toolBtnRelate.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolBtnRelate.Name = "toolBtnRelate";
+            this.toolBtnRelate.Size = new System.Drawing.Size(52, 22);
+            this.toolBtnRelate.Text = "关联";
+            this.toolBtnRelate.Click += new System.EventHandler(this.toolBtnRelate_Click);
+            // 
+            // toolCbZoom
+            // 
+            this.toolCbZoom.Items.AddRange(new object[] {
+            "0.5",
+            "0.75",
+            "1.0",
+            "1.25",
+            "1.5",
+            "2.0",
+            "2.5"});
+            this.toolCbZoom.Name = "toolCbZoom";
+            this.toolCbZoom.Size = new System.Drawing.Size(75, 25);
+            this.toolCbZoom.Text = "1.0";
+            this.toolCbZoom.TextChanged += new System.EventHandler(this.toolCbZoom_TextChanged);
             // 
             // UcMindMap
             // 
@@ -431,5 +466,8 @@
         private System.Windows.Forms.RichTextBox richTextBox1;
         private System.Windows.Forms.ToolStripButton toolBtnAttachNote;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator5;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
+        private System.Windows.Forms.ToolStripButton toolBtnRelate;
+        private System.Windows.Forms.ToolStripComboBox toolCbZoom;
     }
 }

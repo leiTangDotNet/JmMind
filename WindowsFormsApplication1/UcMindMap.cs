@@ -72,5 +72,16 @@ namespace WindowsFormsApplication1
             this.splitContainer1.Panel2Collapsed = !this.splitContainer1.Panel2Collapsed;
         }
 
+        private void toolBtnRelate_Click(object sender, EventArgs e)
+        {
+            this.mindMap.RelateSubjectLink();
+        }
+
+        private void toolCbZoom_TextChanged(object sender, EventArgs e)
+        {
+            this.mindMap.ZoomMap(float.Parse(this.toolCbZoom.Text));
+        }
+         
+
     }
 }

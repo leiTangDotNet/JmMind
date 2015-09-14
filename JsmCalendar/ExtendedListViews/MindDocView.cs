@@ -68,7 +68,8 @@ namespace JsmMind
     /// </summary>
     [Serializable]
     public class SubjectBase
-    {
+    { 
+        public static float zoomValue = 1;
         private string title = "主题";
         private string content = "";
 
@@ -81,6 +82,8 @@ namespace JsmMind
         private Color selectColor = Color.SteelBlue;
         private Color activeColor = Color.LightSteelBlue;
 
+        private float zoom = 1;
+
         protected Point centerPoint = new Point(0, 0);
         protected int width = 0;
         protected int height = 0;
@@ -88,6 +91,8 @@ namespace JsmMind
         protected int marginHeight = 10;
         protected int branchLinkWidth = 30;
         protected int branchSplitHeight = 12;
+        protected int imageSplitWidth = 5;
+
 
         protected int leftBuffer = 30;
 
@@ -106,6 +111,8 @@ namespace JsmMind
 
         protected SubjectBase parentSubject = null;
         protected SubjectBase relateSubject = null;
+        private SubjectBase linkSubject = null;
+
 
 
         protected List<SubjectBase> childSubjects = new List<SubjectBase>();
@@ -206,7 +213,7 @@ namespace JsmMind
             foreach(SubjectPicture subjectPicture in subjectPictures)
             {
                 w += subjectPicture.SubjectImage.Width;
-                w += 5;
+                w += this.imageSplitWidth;
 
                 if(subjectPicture.SubjectImage.Height>h)
                 {
@@ -235,6 +242,23 @@ namespace JsmMind
             {
                 topSubject.AdjustPosition();
             }
+        }
+
+        public void ZoomValue()
+        {
+            this.font = new Font("微软雅黑", this.font.Size / this.zoom * zoomValue);
+
+            this.centerPoint = new Point((int)(this.centerPoint.X / this.zoom * zoomValue), (int)(this.centerPoint.Y / this.zoom * zoomValue));
+            this.width = (int)(this.width / this.zoom * zoomValue);
+            this.height = (int)(this.height / this.zoom * zoomValue); 
+            this.marginWidth = (int)(this.marginWidth / this.zoom * zoomValue);
+            this.marginHeight = (int)(this.marginHeight / this.zoom * zoomValue);
+            this.branchLinkWidth = (int)(this.branchLinkWidth / this.zoom * zoomValue);
+            this.branchSplitHeight = (int)(this.branchSplitHeight / this.zoom * zoomValue);
+            this.imageSplitWidth = (int)(this.imageSplitWidth / this.zoom * zoomValue); 
+            this.leftBuffer = (int)(this.leftBuffer / this.zoom * zoomValue);  
+              
+            this.zoom= zoomValue; 
         }
 
 
@@ -267,11 +291,11 @@ namespace JsmMind
             if(this.parentSubject!=null)
             {
                 //拖出主题
-                if(Math.Abs(movePoint.X - this.parentSubject.CenterPoint.X)>500)
+                if (Math.Abs(movePoint.X - this.parentSubject.CenterPoint.X) > 500 || Math.Abs(movePoint.Y - this.parentSubject.CenterPoint.Y) > 300)
                 {
                     SubjectBase topSubject = this.GetTopSubect();
                     this.ParentSubject = null; 
-                    topSubject.FloatSubjects.Add(this);
+                    topSubject.FloatSubjects.Add(this); 
                     this.SetTitleStyle();
                 }
                 else
@@ -349,7 +373,7 @@ namespace JsmMind
         /// <param name="subject"></param>
         public void InsertSubject(SubjectBase subject,int position)
         { 
-            subject.parentSubject = this;
+            subject.parentSubject = this; 
             subject.SetTitleStyle();
 
             if (!this.childSubjects.Contains(subject))
@@ -439,6 +463,7 @@ namespace JsmMind
         /// </summary>
         public void SetTitleStyle()
         {
+            this.zoom = 1;
             int lv = this.ParentSubject != null ? this.ParentSubject.Level + 1 : 0;
             if (lv > 3) lv = 3;
             if (this.level == lv)
@@ -460,7 +485,7 @@ namespace JsmMind
                         this.ForeColor = Color.DimGray;
                         this.BorderColor = Color.DimGray;
                         this.Font = new Font("微软雅黑", 12.0f);
-                        this.Title = "浮动主题";
+                        this.Title = (this.Title == "主题" || this.Title == "子主题") ? "浮动主题" : this.Title;
                         this.BranchLinkWidth = 20;
                         this.BranchSplitHeight = 24;
                         break;
@@ -499,7 +524,8 @@ namespace JsmMind
                         this.Title = "子主题";
                         break;
                 }
-            } 
+            }
+            this.ZoomValue();
             foreach (SubjectBase childSubject in ChildSubjects)
             {
                 childSubject.SetTitleStyle();
@@ -611,6 +637,12 @@ namespace JsmMind
         {
             get { return branchSplitHeight; }
             set { branchSplitHeight = value; }
+        }
+
+        public int ImageSplitWidth
+        {
+            get { return imageSplitWidth; }
+            set { imageSplitWidth = value; }
         } 
         public bool Expanded
         {
@@ -683,8 +715,13 @@ namespace JsmMind
         {
             get { return relateSubject; }
             set { relateSubject = value; }
-        }  
+        }
 
+        public SubjectBase LinkSubject
+        {
+            get { return linkSubject; }
+            set { linkSubject = value; }
+        }
         public List<SubjectBase> ChildSubjects
         {
             get { return childSubjects; }
@@ -696,6 +733,8 @@ namespace JsmMind
             get { return floatSubjects; }
             set { floatSubjects = value; }
         }
+
+
         public List<SubjectPicture> SubjectPictures
         {
             get { return subjectPictures; }
@@ -731,7 +770,7 @@ namespace JsmMind
             this.BranchLinkWidth = 20;
             this.BranchSplitHeight=24;
 
-            this.level = 0;
+            this.level = 0; 
         } 
     }
     /// <summary>
@@ -741,12 +780,12 @@ namespace JsmMind
     public class TitleSubject : SubjectBase
     {
         public TitleSubject(SubjectBase fatherSubject)
-        {
+        { 
             this.ParentSubject = fatherSubject; 
         }
 
         public TitleSubject(SubjectBase brotherSubject,bool insertUp)
-        {
+        { 
             SubjectBase fatherSubject = brotherSubject.ParentSubject;
             if (fatherSubject == null)
             {
@@ -865,6 +904,8 @@ namespace JsmMind
         private SubjectBase collapseSubject = null;
         private SubjectBase editSubject = null;
 
+        private SubjectBase linkSubject = null;
+
         private SubjectBase centerProject = null;
          
         private SubjectBase dragSubject = null;
@@ -877,6 +918,7 @@ namespace JsmMind
         private Color tempForeColor;
 
 
+        private bool openLinkSubject = false;
         private int selectionStartLine = 0;
         private int selectionEndLine = 0;
 
@@ -1055,6 +1097,22 @@ namespace JsmMind
 
         }
 
+        public void RelateSubjectLink()
+        {
+            openLinkSubject = true;
+            linkSubject = null;
+        }
+
+        public void ZoomMap(float zoom)
+        {
+            SubjectBase.zoomValue = zoom;
+            foreach(SubjectBase subject in subjectNodes)
+            {
+                subject.ZoomValue();
+            }
+            Invalidate();
+
+        }
         #endregion
         #region Overrides
         public override bool PreProcessMessage(ref Message msg)
@@ -1161,13 +1219,28 @@ namespace JsmMind
                     } 
 
                     //是否选中主题
-                    selectedSubject = null;
+                    selectedSubject = null; 
                     SubjectBase subjectNode = SubjectInArea(e);
                     if (subjectNode != null)
                     {
                         selectedSubject = subjectNode;
                         if (SubjectClick != null)
                             SubjectClick(this, subjectNode);
+
+
+                        if (linkSubject != null)
+                        {
+                            subjectNode.LinkSubject = linkSubject;
+                            linkSubject = null; 
+                        }
+
+                        if(openLinkSubject)
+                        {
+                            linkSubject = subjectNode;
+                            openLinkSubject = false;
+                        }
+
+
 
                         //拖拽开始
                         dragSubject = subjectNode.DeepClone();
@@ -1403,12 +1476,16 @@ namespace JsmMind
             {
                 RenderSubjectParentLink(g, r, subjectNode);
             }   
+            if(subjectNode.LinkSubject!=null)
+            {
+                RenderSubjectRelateLink(g, r, subjectNode); 
+            }
             //2.先绘制主题的分支连接线和折叠按钮，再绘制主题内容显示最前  
             RenderSubjectBranchLink(g, r, subjectNode);
 
             //3.绘制主题内容  
             RenderSubjectTitle(g, r, subjectNode);
-
+             
             g.SmoothingMode = SmoothingMode.Default; 
         }
 
@@ -1423,20 +1500,16 @@ namespace JsmMind
             int top = r.Left + subjectNode.CenterPoint.Y - subjectNode.Height / 2 + hb;
             string title = subjectNode.Title;
             Rectangle sr = new Rectangle(left, top, subjectNode.Width, subjectNode.Height);
-             
-
-            
-            
+              
             //绘制主题绘制区域
             subjectNode.RectAreas = sr;
-             
-
-
+              
             //开始绘制
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
 
-            if (nowSubject.ParentSubject != null && Math.Abs(subjectNode.CenterPoint.X - nowSubject.ParentSubject.CenterPoint.X) < 500)
+            if (nowSubject.ParentSubject != null && Math.Abs(subjectNode.CenterPoint.X-nowSubject.CenterPoint.X) < 400
+                && Math.Abs(subjectNode.CenterPoint.Y - nowSubject.ParentSubject.CenterPoint.Y) < 300)
             {
                 //1.绘制连接线 
                 if (subjectNode.ParentSubject != null)
@@ -1469,6 +1542,15 @@ namespace JsmMind
             }
         }
 
+        private void RenderSubjectRelateLink(Graphics g, Rectangle r, SubjectBase subject)
+        {
+            if (subject.LinkSubject == null) return;
+            g.Clip = new System.Drawing.Region(r);
+            if (mapViewModel == MapViewModel.ExpandTwoSides)
+            {
+                RenderLinkRelate(g, r, subject);
+            }
+        }
         private void RenderSubjectBranchLink(Graphics g, Rectangle r, SubjectBase subject)
         {
             if (subject.ChildSubjects.Count == 0) return;
@@ -1515,12 +1597,12 @@ namespace JsmMind
             Font f = subject.Font;
             Pen p = new Pen(subject.BorderColor, 1.0f);
             Rectangle sr = subject.RectAreas;
-            g.Clip = new Region(new Rectangle(sr.Left - 10, sr.Top - 10, sr.Width + 20 + subject.BranchLinkWidth, sr.Height + 20));
+            g.Clip = new Region(new Rectangle(sr.Left - (int)(10 * SubjectBase.zoomValue), sr.Top - (int)(10 * SubjectBase.zoomValue), sr.Width + (int)(20 * SubjectBase.zoomValue) + subject.BranchLinkWidth, sr.Height + (int)(20 * SubjectBase.zoomValue)));
 
             int radius = subject.Height / 6;
             if (selectedSubject == subject)  //绘制选择边框和扩展
             {
-                Rectangle activeArea = new Rectangle(sr.Left - 3, sr.Top - 6, sr.Width + 7, sr.Height + 10);
+                Rectangle activeArea = new Rectangle(sr.Left - (int)(3 * SubjectBase.zoomValue), sr.Top - (int)(6 * SubjectBase.zoomValue), sr.Width + (int)(7 * SubjectBase.zoomValue), sr.Height + (int)(10 * SubjectBase.zoomValue));
 
                 //绘制扩展
                 RenderPlus(g, activeArea, subject);
@@ -1532,7 +1614,8 @@ namespace JsmMind
             }
             else if (activeSubject == subject) //绘制选中边框
             {
-                Rectangle activeArea = new Rectangle(sr.Left - 3, sr.Top - 6, sr.Width + 7, sr.Height + 10);
+                Rectangle activeArea = new Rectangle(sr.Left - (int)(3 * SubjectBase.zoomValue), sr.Top - (int)(6 * SubjectBase.zoomValue), sr.Width + (int)(7 * SubjectBase.zoomValue), sr.Height + (int)(10 * SubjectBase.zoomValue));
+                 
                 FillRoundRectangle(g, new SolidBrush(subject.ActiveColor), activeArea, radius);
                 g.FillRectangle(Brushes.White, sr.Left - 1, sr.Top - 1, sr.Width + 2, sr.Height + 2);
             }
@@ -1555,7 +1638,7 @@ namespace JsmMind
                 Image img = subject.SubjectPictures[i].SubjectImage;
 
                 g.DrawImage(img, (float)(sr.Left + lb), (float)(sr.Top + sr.Height / 2 - img.Height / 2 + 1));
-                lb += (img.Width + 5);
+                lb += (img.Width + subject.ImageSplitWidth);
             }
 
             SizeF size = g.MeasureString(title, f);
@@ -1624,6 +1707,88 @@ namespace JsmMind
             if (roration > 16) roration = 16;
             if (roration < 4) roration = 4;
             DrawRoundLine(g, penLine, rect, roration, direction);
+        }
+        private void RenderLinkRelate(Graphics g, Rectangle r, SubjectBase subject)
+        {
+            Pen penLine = new Pen(Color.Goldenrod, 1.0f);
+            penLine.DashStyle = DashStyle.Dash;
+            SubjectBase parentSubject = subject.LinkSubject;
+            int branchLinkWidth = parentSubject.BranchLinkWidth;
+
+            //父主题分支连接点
+            int x1 = parentSubject.CenterPoint.X;
+            int y1 = parentSubject.CenterPoint.Y;
+            //子主体连接线起始点
+            int x2 = subject.CenterPoint.X;
+            int y2 = subject.CenterPoint.Y;
+
+            if (x1 == x2 || y1 == y2)
+            {
+                g.DrawLine(penLine, x1, y1, x2, y2);
+                return;
+            }
+
+
+            int xa = 0;
+            int ya = 0;
+
+            int xb = 0;
+            int yb = 0;
+
+            int xc = 0;
+            int yc = 0; 
+
+            if (x1 < x2)
+            {
+                if (y1 < y2)
+                {
+                    xa = parentSubject.CenterPoint.X + parentSubject.RectAreas.Width / 2;
+                    ya = parentSubject.CenterPoint.Y;
+
+                    xb = subject.CenterPoint.X;
+                    yb = subject.CenterPoint.Y - subject.Height / 2;
+                }
+                else
+                {
+                    xa = parentSubject.CenterPoint.X + parentSubject.RectAreas.Width / 2;
+                    ya = parentSubject.CenterPoint.Y;
+
+                    xb = subject.CenterPoint.X;
+                    yb = subject.CenterPoint.Y + subject.Height / 2;
+                }
+            }
+            else
+            {
+                if (y1 < y2)
+                {
+                    xb = parentSubject.CenterPoint.X + parentSubject.RectAreas.Width / 2;
+                    yb = parentSubject.CenterPoint.Y;
+
+                    xa = subject.CenterPoint.X;
+                    ya = subject.CenterPoint.Y - subject.Height / 2;
+                }
+                else
+                {
+                    xb = parentSubject.CenterPoint.X + parentSubject.RectAreas.Width / 2;
+                    yb = parentSubject.CenterPoint.Y;
+
+                    xa = subject.CenterPoint.X;
+                    ya = subject.CenterPoint.Y + subject.Height / 2;
+                }
+            }
+
+            xc = xa + (xb - xa) / 2;
+            yc = ya + (yb - ya) / 4;
+
+            List<Point> points = new List<Point>();
+            points.Add(new Point(xa, ya));
+            points.Add(new Point(xc, yc));
+            //points.Add(new Point(xd, yd));
+            points.Add(new Point(xb, yb));
+
+            List<Point> curvePoints = JsmMind.Helpers.CurveTools.ParaCurveFitting(points);
+
+            g.DrawLines(penLine, curvePoints.ToArray());
         }
         private void RenderLinkAttach(Graphics g, Rectangle r, SubjectBase subject)
         {
@@ -1707,30 +1872,30 @@ namespace JsmMind
 
         private void RenderPlus(Graphics g, Rectangle area, SubjectBase subject)
         {
-            Rectangle sr = new Rectangle(area.Left - 10, area.Top - 10, area.Width + 20, area.Height + 20);
+            Rectangle sr = new Rectangle(area.Left - (int)(10 * SubjectBase.zoomValue), area.Top - (int)(10 * SubjectBase.zoomValue), area.Width + (int)(20 * SubjectBase.zoomValue), area.Height + (int)(20 * SubjectBase.zoomValue));
             g.Clip = new Region(sr);
 
             Pen penPlus = new Pen(new SolidBrush(Color.White), 2.0f);
 
-            Rectangle pmLeft = new Rectangle(area.Left - 8, area.Top + area.Height / 2 - 10, 40, 20);
+            Rectangle pmLeft = new Rectangle(area.Left - (int)(8 * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
             subject.RectPlusLeft = new Rectangle(pmLeft.Left,pmLeft.Top,pmLeft.Width/2,pmLeft.Height);
             RenderPlusLeft(g, pmLeft, penPlus, selectPlus == 1 ? Color.LightSteelBlue : Color.SteelBlue);
 
             if(subject.GetType()==typeof(TitleSubject))
-            { 
-                Rectangle pmTop = new Rectangle(area.Left + area.Width / 2 - 10, area.Top - 8, 20, 40);
+            {
+                Rectangle pmTop = new Rectangle(area.Left + area.Width / 2 - (int)(10 * SubjectBase.zoomValue), area.Top - (int)(8 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue));
                 subject.RectPlusTop = new Rectangle(pmTop.Left, pmTop.Top, pmTop.Width, pmTop.Height / 2);
                 RenderPlusTop(g, pmTop, penPlus, selectPlus == 2 ? Color.LightSteelBlue : Color.SteelBlue); 
             }
 
-            Rectangle pmRight = new Rectangle(area.Left + area.Width - (40 - 8) - 1, area.Top + area.Height / 2 - 10, 40, 20);
+            Rectangle pmRight = new Rectangle(area.Left + area.Width - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
             subject.RectPlusRight = new Rectangle(pmRight.Left + pmRight.Width / 2, pmRight.Top, pmRight.Width / 2, pmRight.Height);
             RenderPlusRight(g, pmRight, penPlus, selectPlus == 3 ? Color.LightSteelBlue : Color.SteelBlue);
 
 
             if (subject.GetType() == typeof(TitleSubject))
             {
-                Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - 10, area.Top + area.Height - (40 - 8) - 1, 20, 40);
+                Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - (int)(10 * SubjectBase.zoomValue), area.Top + area.Height - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue));
                 subject.RectPlusBottom = new Rectangle(pmBottom.Left, pmBottom.Top + pmBottom.Height / 2, pmBottom.Width, pmBottom.Height / 2);
                 RenderPlusBottom(g, pmBottom, penPlus, selectPlus == 4 ? Color.LightSteelBlue : Color.SteelBlue);
             }
@@ -1739,29 +1904,29 @@ namespace JsmMind
         private void RenderPlusLeft(Graphics g, Rectangle pmLeft, Pen penPlus, Color backColr)
         {
             g.FillEllipse(new SolidBrush(backColr), pmLeft);
-            g.DrawLine(penPlus, pmLeft.Left + 2, pmLeft.Top + pmLeft.Height / 2, pmLeft.Left + 8, pmLeft.Top + pmLeft.Height / 2);
-            g.DrawLine(penPlus, pmLeft.Left + 5, pmLeft.Top + pmLeft.Height / 2 - 3, pmLeft.Left + 5, pmLeft.Top + pmLeft.Height / 2 + 3);
+            g.DrawLine(penPlus, pmLeft.Left + (int)(2 * SubjectBase.zoomValue), pmLeft.Top + pmLeft.Height / 2, pmLeft.Left + (int)(8 * SubjectBase.zoomValue), pmLeft.Top + pmLeft.Height / 2);
+            g.DrawLine(penPlus, pmLeft.Left + (int)(5 * SubjectBase.zoomValue), pmLeft.Top + pmLeft.Height / 2 - (int)(3 * SubjectBase.zoomValue), pmLeft.Left + (int)(5 * SubjectBase.zoomValue), pmLeft.Top + pmLeft.Height / 2 + (int)(3 * SubjectBase.zoomValue));
         }
 
         private void RenderPlusRight(Graphics g, Rectangle pmRight, Pen penPlus, Color backColr)
         {
             g.FillEllipse(new SolidBrush(backColr), pmRight);
-            g.DrawLine(penPlus, pmRight.Right - 8, pmRight.Top + pmRight.Height / 2, pmRight.Right - 2, pmRight.Top + pmRight.Height / 2);
-            g.DrawLine(penPlus, pmRight.Right - 5, pmRight.Top + pmRight.Height / 2 - 3, pmRight.Right - 5, pmRight.Top + pmRight.Height / 2 + 3); 
+            g.DrawLine(penPlus, pmRight.Right - (int)(8 * SubjectBase.zoomValue), pmRight.Top + pmRight.Height / 2, pmRight.Right - (int)(2 * SubjectBase.zoomValue), pmRight.Top + pmRight.Height / 2);
+            g.DrawLine(penPlus, pmRight.Right - (int)(5 * SubjectBase.zoomValue), pmRight.Top + pmRight.Height / 2 - (int)(3 * SubjectBase.zoomValue), pmRight.Right - (int)(5 * SubjectBase.zoomValue), pmRight.Top + pmRight.Height / 2 + (int)(3 * SubjectBase.zoomValue)); 
         }
 
         private void RenderPlusTop(Graphics g, Rectangle pmTop, Pen penPlus, Color backColr)
         {
             g.FillEllipse(new SolidBrush(backColr), pmTop);
-            g.DrawLine(penPlus, pmTop.Left + 7, pmTop.Top + 5, pmTop.Left + 13, pmTop.Top + 5);
-            g.DrawLine(penPlus, pmTop.Left + 10, pmTop.Top + 2, pmTop.Left + 10, pmTop.Top + 8); 
+            g.DrawLine(penPlus, pmTop.Left + (int)(7 * SubjectBase.zoomValue), pmTop.Top + (int)(5 * SubjectBase.zoomValue), pmTop.Left + (int)(13 * SubjectBase.zoomValue), pmTop.Top + (int)(5 * SubjectBase.zoomValue));
+            g.DrawLine(penPlus, pmTop.Left + (int)(10 * SubjectBase.zoomValue), pmTop.Top + (int)(2 * SubjectBase.zoomValue), pmTop.Left + (int)(10 * SubjectBase.zoomValue), pmTop.Top + (int)(8 * SubjectBase.zoomValue)); 
         }
 
         private void RenderPlusBottom(Graphics g, Rectangle pmBottom, Pen penPlus, Color backColr)
         {
             g.FillEllipse(new SolidBrush(backColr), pmBottom);
-            g.DrawLine(penPlus, pmBottom.Left + 7, pmBottom.Bottom - 5, pmBottom.Left + 13, pmBottom.Bottom - 5);
-            g.DrawLine(penPlus, pmBottom.Left + 10, pmBottom.Bottom - 2, pmBottom.Left + 10, pmBottom.Bottom - 8); 
+            g.DrawLine(penPlus, pmBottom.Left + (int)(7 * SubjectBase.zoomValue), pmBottom.Bottom - (int)(5 * SubjectBase.zoomValue), pmBottom.Left + (int)(13 * SubjectBase.zoomValue), pmBottom.Bottom - (int)(5 * SubjectBase.zoomValue));
+            g.DrawLine(penPlus, pmBottom.Left + (int)(10 * SubjectBase.zoomValue), pmBottom.Bottom - (int)(2 * SubjectBase.zoomValue), pmBottom.Left + (int)(10 * SubjectBase.zoomValue), pmBottom.Bottom - (int)(8 * SubjectBase.zoomValue)); 
         }
 
         private void DrawAttachRectangle(Graphics g, Pen pen, Rectangle rect, int cornerRadius)
@@ -1878,7 +2043,9 @@ namespace JsmMind
            
             //roundedRect.CloseFigure();
             return roundedRect;
-        } 
+        }
+
+       
 		#endregion
         
 

@@ -46,6 +46,7 @@
     <Compile Include="ExtendedListViews\ContainerListView.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="ExtendedListViews\Helpers\CurveTools.cs" />
     <Compile Include="ExtendedListViews\Helpers\StringTools.cs" />
     <Compile Include="ExtendedListViews\HelperTools.cs" />
     <Compile Include="ExtendedListViews\IParentChildList.cs" />
