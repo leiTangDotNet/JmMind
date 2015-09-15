@@ -68,8 +68,9 @@ namespace JsmMind
     /// </summary>
     [Serializable]
     public class SubjectBase
-    { 
+    {
         public static float zoomValue = 1;
+        static public List<SubjectBase> FloatSubjects = new List<SubjectBase>();
         private string title = "主题";
         private string content = "";
 
@@ -116,12 +117,13 @@ namespace JsmMind
 
 
         protected List<SubjectBase> childSubjects = new List<SubjectBase>();
-        private List<SubjectBase> floatSubjects = new List<SubjectBase>();
 
 
         protected List<SubjectPicture> subjectPictures = new List<SubjectPicture>();
 
         private int moveX = -10000;
+
+        private bool dragOut = false;
 
         protected int scalceWidth = 0;
 
@@ -203,7 +205,7 @@ namespace JsmMind
         /// <summary>
         /// 调整主题大小
         /// </summary>
-        public void AdjustSubjectSize()
+        public void AdjustSubjectSize(bool bAdjustPosition=true)
         {
             Image bmp=new Bitmap(200,200);
             Graphics g = Graphics.FromImage(bmp);
@@ -231,16 +233,20 @@ namespace JsmMind
             int dy = (this.marginHeight + h + this.marginHeight - this.height)/2;
             this.width = this.marginWidth + w + this.marginWidth;
             this.height = this.marginHeight + h + this.marginHeight;
-            this.moveX = dx;
-            this.scalceWidth = dx;  //增加宽度
-            if(this.parentSubject!=null)
-            {
-                this.parentSubject.AdjustPosition();
-            } 
-            SubjectBase topSubject = this.GetTopSubect();
-            if (topSubject != null)
-            {
-                topSubject.AdjustPosition();
+
+            if (bAdjustPosition)
+            { 
+                this.moveX = dx;
+                this.scalceWidth = dx;  //增加宽度
+                if (this.parentSubject != null)
+                {
+                    this.parentSubject.AdjustPosition();
+                }
+                SubjectBase topSubject = this.GetTopSubect();
+                if (topSubject != null)
+                {
+                    topSubject.AdjustPosition();
+                }
             }
         }
 
@@ -285,82 +291,97 @@ namespace JsmMind
         /// </summary>
         /// <param name="movePoint">移动后的中心位置</param>
         public virtual void MoveSubjectPosition(Point movePoint)
-        { 
+        {
             SubjectBase parentSubject = this.ParentSubject;
-            //控制移动范围
-            if(this.parentSubject!=null)
+
+            int dX = movePoint.X - this.centerPoint.X;
+            int dY = movePoint.Y - this.centerPoint.Y;
+            //拖出主题
+            if (this.DragOut)
             {
-                //拖出主题
-                if (Math.Abs(movePoint.X - this.parentSubject.CenterPoint.X) > 500 || Math.Abs(movePoint.Y - this.parentSubject.CenterPoint.Y) > 300)
+                SubjectBase topSubject = this.GetTopSubect();
+                this.ParentSubject = null;
+                FloatSubjects.Add(this);
+                this.SetTitleStyle(); 
+                 
+                this.CenterPoint = new Point(movePoint.X, movePoint.Y);
+
+                foreach (SubjectBase childSub in this.childSubjects)
                 {
-                    SubjectBase topSubject = this.GetTopSubect();
-                    this.ParentSubject = null; 
-                    topSubject.FloatSubjects.Add(this); 
-                    this.SetTitleStyle();
+                    childSub.moveX = -10000;
                 }
-                else
+                this.moveX = 0;
+
+                this.AdjustPosition();
+                if (parentSubject != null)
+                    parentSubject.AdjustPosition();
+
+                this.DragOut = false;
+                return;
+            }
+
+            //移动范围
+            if (this.parentSubject != null)
+            { 
+                int x = this.parentSubject.CenterPoint.X + (this.parentSubject.Width / 2) + this.parentSubject.BranchLinkWidth + this.width / 2 + 30;
+                if (x > movePoint.X)
                 {
-                    int x = this.parentSubject.CenterPoint.X + (this.parentSubject.Width / 2) + this.parentSubject.BranchLinkWidth + this.width / 2 + 30;
-                    if (x > movePoint.X)
-                    {
-                        movePoint.X = x;
-                    }
+                    movePoint.X = x;
+                }
 
-                    bool bUp = movePoint.Y < this.centerPoint.Y;
-                    for (int i = 0; i < this.parentSubject.childSubjects.Count; i++)
-                    {
-                        SubjectBase subject = this.parentSubject.childSubjects[i];
+                bool bUp = movePoint.Y < this.centerPoint.Y;
+                for (int i = 0; i < this.parentSubject.childSubjects.Count; i++)
+                {
+                    SubjectBase subject = this.parentSubject.childSubjects[i];
 
-                        if (movePoint.Y < subject.centerPoint.Y)
+                    if (movePoint.Y < subject.centerPoint.Y)
+                    {
+                        if (subject != this)
                         {
-                            if (subject != this)
-                            {
 
-                                if (bUp)
-                                {
-                                    this.parentSubject.childSubjects.Remove(this);
-                                    this.parentSubject.childSubjects.Insert(i, this);
-                                }
-                                else
-                                {
-                                    this.parentSubject.childSubjects.Remove(this);
-                                    this.parentSubject.childSubjects.Insert(i - 1, this);
-                                }
+                            if (bUp)
+                            {
+                                this.parentSubject.childSubjects.Remove(this);
+                                this.parentSubject.childSubjects.Insert(i, this);
                             }
                             else
                             {
-
-                            }
-                            break;
-                        }
-                        //移动到最后
-                        if (i == this.parentSubject.childSubjects.Count - 1)
-                        {
-                            if (movePoint.Y > subject.centerPoint.Y)
-                            {
                                 this.parentSubject.childSubjects.Remove(this);
-                                this.parentSubject.childSubjects.Add(this);
+                                this.parentSubject.childSubjects.Insert(i - 1, this);
                             }
                         }
+                        else
+                        {
 
+                        }
+                        break;
                     }
-
-                    if (this.GetType() == typeof(TitleSubject))
+                    //移动到最后
+                    if (i == this.parentSubject.childSubjects.Count - 1)
                     {
-                        movePoint.Y = this.CenterPoint.Y;
+                        if (movePoint.Y > subject.centerPoint.Y)
+                        {
+                            this.parentSubject.childSubjects.Remove(this);
+                            this.parentSubject.childSubjects.Add(this);
+                        }
                     }
-                } 
+
+                }
+
+                if (this.GetType() == typeof(TitleSubject))
+                {
+                    movePoint.Y = this.CenterPoint.Y;
+                }
             } 
-            //是否拖拽到其他其他节点
-            int dX = movePoint.X - this.centerPoint.X;
-            int dY = movePoint.Y - this.centerPoint.Y;
+            dX = movePoint.X - this.centerPoint.X;
+            dY = movePoint.Y - this.centerPoint.Y;
             this.CenterPoint = new Point(movePoint.X, movePoint.Y); 
+
             foreach(SubjectBase childSub in this.childSubjects)
             {
                 childSub.moveX = dX;
             } 
-            this.moveX = 0;
-
+            this.moveX = 0; 
             this.AdjustPosition();
             if (parentSubject != null)
                 parentSubject.AdjustPosition();
@@ -396,6 +417,20 @@ namespace JsmMind
             }  
         } 
 
+        public void RemoveSubject(SubjectBase subject)
+        {
+            if (this.ChildSubjects.Contains(subject))
+            {
+                this.ChildSubjects.Remove(subject); this.AdjustPosition();
+
+                SubjectBase topSubject = this.GetTopSubect();
+                if (topSubject != null)
+                {
+                    topSubject.AdjustPosition();
+                }
+            } 
+        }
+    
         /// <summary>
         /// 增加图片
         /// </summary>
@@ -476,52 +511,69 @@ namespace JsmMind
             {
                 switch (this.level)
                 {
-                    case 0: 
-                        this.Width = 133;
-                        this.Height = 35;
+                    case 0:  
+                        //this.Width = 133;
+                        //this.Height = 35;
                         this.MarginWidth = 20;
-                        this.MarginHeight = 10;
+                        this.MarginHeight = 10; 
+                        this.branchLinkWidth=30;
+                        this.branchSplitHeight=12;
+                        this.imageSplitWidth=5;
+                        this.leftBuffer = 30;
                         this.BackColor = Color.WhiteSmoke;
                         this.ForeColor = Color.DimGray;
                         this.BorderColor = Color.DimGray;
                         this.Font = new Font("微软雅黑", 12.0f);
-                        this.Title = (this.Title == "主题" || this.Title == "子主题") ? "浮动主题" : this.Title;
-                        this.BranchLinkWidth = 20;
-                        this.BranchSplitHeight = 24;
+                        this.Title = (this.Title == "主题" || this.Title == "子主题") ? "浮动主题" : this.Title; 
+                        this.AdjustSubjectSize(false);
                         break;
                     case 1:
-                        this.Width = 93;
-                        this.Height = 35;
+                        //this.Width = 93;
+                        //this.Height = 35;
                         this.marginWidth = 20;
                         this.marginHeight = 6;
+                        this.branchLinkWidth=30;
+                        this.branchSplitHeight=12;
+                        this.imageSplitWidth=5;
+                        this.leftBuffer = 30;
                         this.BackColor = Color.AliceBlue;
                         this.ForeColor = Color.DimGray;
                         this.BorderColor = Color.SteelBlue;
                         this.Font = new Font("微软雅黑", 12.0f);
-                        this.Title = "主题";
+                        this.Title =(this.Title == "主题" || this.Title == "子主题") ? "主题" : this.Title;
+                        this.AdjustSubjectSize(false);
                         break;
                     case 2:
-                        this.Width = 83;
-                        this.Height = 25;
+                        //this.Width = 83;
+                        //this.Height = 25;
                         this.marginWidth = 15;
                         this.marginHeight = 3;
+                        this.branchLinkWidth=30;
+                        this.branchSplitHeight=12;
+                        this.imageSplitWidth=5;
+                        this.leftBuffer = 30;
                         this.BackColor = Color.Honeydew;
                         this.ForeColor = Color.DimGray;
                         this.BorderColor = Color.Green;
                         this.Font = new Font("微软雅黑", 10.0f);
-                        this.Title = "子主题";
-
+                        this.Title = (this.Title == "主题" || this.Title == "子主题") ? "子主题" : this.Title;
+                        this.AdjustSubjectSize(false); 
                         break;
                     case 3:
-                        this.Width = 63;
-                        this.Height = 20;
+                        //this.Width = 63;
+                        //this.Height = 20;
                         this.marginWidth = 5;
                         this.marginHeight = 2;
+                        this.branchLinkWidth=30;
+                        this.branchSplitHeight=12;
+                        this.imageSplitWidth=5;
+                        this.leftBuffer = 30;
                         this.BackColor = Color.White;
                         this.ForeColor = Color.DimGray;
                         this.BorderColor = Color.Transparent;
                         this.Font = new Font("微软雅黑", 8.0f);
-                        this.Title = "子主题";
+                        this.Title = (this.Title == "主题" || this.Title == "子主题") ? "子主题" : this.Title;
+                        this.AdjustSubjectSize(false); 
                         break;
                 }
             }
@@ -727,13 +779,7 @@ namespace JsmMind
             get { return childSubjects; }
             set { childSubjects = value; }
         } 
-
-        public List<SubjectBase> FloatSubjects
-        {
-            get { return floatSubjects; }
-            set { floatSubjects = value; }
-        }
-
+         
 
         public List<SubjectPicture> SubjectPictures
         {
@@ -744,6 +790,11 @@ namespace JsmMind
         {
             get { return moveX; }
             set { moveX = value; }
+        }
+        public bool DragOut
+        {
+            get { return dragOut; }
+            set { dragOut = value; }
         }
         #endregion
 
@@ -1370,9 +1421,9 @@ namespace JsmMind
                         }
                         if (isDragChild == false && isDragSelf==false && isDragParent==false)
                         {
-                            if(centerProject.FloatSubjects.Contains(nowSubject))
+                            if(SubjectBase.FloatSubjects.Contains(nowSubject))
                             {
-                                centerProject.FloatSubjects.Remove(nowSubject);
+                                SubjectBase.FloatSubjects.Remove(nowSubject);
                             }
                             nowSubject.MoveX = -10000;
                             nowSubject.ParentSubject = subjectNode;   
@@ -1406,6 +1457,70 @@ namespace JsmMind
                     //CollapseAll(); 
                 }
 			}
+
+            if (selectedSubject != null)
+            {
+                switch (e.KeyCode)
+                {
+                    case Keys.Delete:
+                        if (selectedSubject.GetType() != typeof(CenterSubject))
+                        {
+                            SubjectBase subject = selectedSubject;
+                            if (SubjectBase.FloatSubjects.Contains(subject))  //浮动主题
+                            {
+                                SubjectBase.FloatSubjects.Remove(subject);
+                            }
+                            else  //主题
+                            {
+                                SubjectBase parentSubject = subject.ParentSubject;
+
+                                if (parentSubject != null)
+                                {
+                                    parentSubject.RemoveSubject(subject);
+                                }
+                            }
+
+                            if (this.subjectNodes.Contains(subject))
+                            {
+                                this.subjectNodes.Remove(subject);
+                            }
+                        }
+                        break;
+                    case Keys.Left:
+                        if (selectedSubject.ParentSubject != null)
+                        {
+                            selectedSubject = selectedSubject.ParentSubject;
+                        }
+                        break;
+                    case Keys.Right:
+                        if (selectedSubject.ChildSubjects.Count > 0)
+                        {
+                            selectedSubject = selectedSubject.ChildSubjects[0];
+                        }
+                        break;
+                    case Keys.Up:
+                        if (selectedSubject.ParentSubject != null)
+                        {
+                            int index = selectedSubject.ParentSubject.ChildSubjects.IndexOf(selectedSubject);
+                            if (index > 0)
+                            {
+                                selectedSubject = selectedSubject.ParentSubject.ChildSubjects[index - 1];
+                            }
+                        }
+                        break;
+                    case Keys.Down:
+                        if (selectedSubject.ParentSubject != null)
+                        {
+                            int index = selectedSubject.ParentSubject.ChildSubjects.IndexOf(selectedSubject);
+                            if (index < selectedSubject.ParentSubject.ChildSubjects.Count - 1)
+                            {
+                                selectedSubject = selectedSubject.ParentSubject.ChildSubjects[index + 1];
+                            }
+                        }
+                        break;
+                }
+                Invalidate();
+            }  
 		}
  
         protected override void DrawHeaders(Graphics g, Rectangle r)
@@ -1428,9 +1543,9 @@ namespace JsmMind
             AdjustScrollbars();
             RenderSubject(centerProject, g, r, 0);
 
-            for (i = 0; i < centerProject.FloatSubjects.Count; i++)
+            for (i = 0; i < SubjectBase.FloatSubjects.Count; i++)
             {
-                RenderSubject(centerProject.FloatSubjects[i], g, r, 0);
+                RenderSubject(SubjectBase.FloatSubjects[i], g, r, 0);
             }
             if (dragSubject != null)
             {
@@ -1508,17 +1623,25 @@ namespace JsmMind
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
 
-            if (nowSubject.ParentSubject != null && Math.Abs(subjectNode.CenterPoint.X-nowSubject.CenterPoint.X) < 400
-                && Math.Abs(subjectNode.CenterPoint.Y - nowSubject.ParentSubject.CenterPoint.Y) < 300)
+            if (nowSubject.GetType()== typeof(TitleSubject) && nowSubject.ParentSubject != null && 
+                (Math.Abs(subjectNode.CenterPoint.X-nowSubject.CenterPoint.X) > 400 || Math.Abs(subjectNode.CenterPoint.Y - nowSubject.ParentSubject.CenterPoint.Y) > 300))
             {
-                //1.绘制连接线 
+                //移除主题
+                nowSubject.DragOut = true;
+            }
+            else
+            {
+
+                //绘制连接线 
                 if (subjectNode.ParentSubject != null)
                 {
                     RenderSubjectParentLink(g, r, subjectNode);
-                }  
-            } 
+                }
 
-            //3.绘制主题内容  
+                nowSubject.DragOut = false; 
+            }
+
+            //绘制主题内容  
             RenderSubjectTitle(g, r, subjectNode);
 
             g.SmoothingMode = SmoothingMode.Default;
@@ -1871,34 +1994,46 @@ namespace JsmMind
         }
 
         private void RenderPlus(Graphics g, Rectangle area, SubjectBase subject)
-        {
+        { 
             Rectangle sr = new Rectangle(area.Left - (int)(10 * SubjectBase.zoomValue), area.Top - (int)(10 * SubjectBase.zoomValue), area.Width + (int)(20 * SubjectBase.zoomValue), area.Height + (int)(20 * SubjectBase.zoomValue));
             g.Clip = new Region(sr);
 
             Pen penPlus = new Pen(new SolidBrush(Color.White), 2.0f);
 
+            //绘制左边Plus
             Rectangle pmLeft = new Rectangle(area.Left - (int)(8 * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
             subject.RectPlusLeft = new Rectangle(pmLeft.Left,pmLeft.Top,pmLeft.Width/2,pmLeft.Height);
+            g.Clip = new Region(subject.RectPlusLeft);  //防止超出边界  
             RenderPlusLeft(g, pmLeft, penPlus, selectPlus == 1 ? Color.LightSteelBlue : Color.SteelBlue);
 
-            if(subject.GetType()==typeof(TitleSubject))
-            {
-                Rectangle pmTop = new Rectangle(area.Left + area.Width / 2 - (int)(10 * SubjectBase.zoomValue), area.Top - (int)(8 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue));
-                subject.RectPlusTop = new Rectangle(pmTop.Left, pmTop.Top, pmTop.Width, pmTop.Height / 2);
-                RenderPlusTop(g, pmTop, penPlus, selectPlus == 2 ? Color.LightSteelBlue : Color.SteelBlue); 
-            }
-
+            //绘制右边边Plus
             Rectangle pmRight = new Rectangle(area.Left + area.Width - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
             subject.RectPlusRight = new Rectangle(pmRight.Left + pmRight.Width / 2, pmRight.Top, pmRight.Width / 2, pmRight.Height);
+            g.Clip = new Region(subject.RectPlusRight);  //防止超出边界           
             RenderPlusRight(g, pmRight, penPlus, selectPlus == 3 ? Color.LightSteelBlue : Color.SteelBlue);
 
 
+            //绘制上边Plus
+            if (subject.GetType() == typeof(TitleSubject))
+            {
+                Rectangle pmTop = new Rectangle(area.Left + area.Width / 2 - (int)(10 * SubjectBase.zoomValue), area.Top - (int)(8 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue));
+                subject.RectPlusTop = new Rectangle(pmTop.Left, pmTop.Top, pmTop.Width, pmTop.Height / 2);
+
+                g.Clip = new Region(subject.RectPlusTop);  //防止超出边界
+                RenderPlusTop(g, pmTop, penPlus, selectPlus == 2 ? Color.LightSteelBlue : Color.SteelBlue);
+            }
+
+            //绘制下边Plus
             if (subject.GetType() == typeof(TitleSubject))
             {
                 Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - (int)(10 * SubjectBase.zoomValue), area.Top + area.Height - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue));
                 subject.RectPlusBottom = new Rectangle(pmBottom.Left, pmBottom.Top + pmBottom.Height / 2, pmBottom.Width, pmBottom.Height / 2);
+
+                g.Clip = new Region(subject.RectPlusBottom);  //防止超出边界
                 RenderPlusBottom(g, pmBottom, penPlus, selectPlus == 4 ? Color.LightSteelBlue : Color.SteelBlue);
             }
+            g.Clip = new Region(sr);
+
         }
 
         private void RenderPlusLeft(Graphics g, Rectangle pmLeft, Pen penPlus, Color backColr)
@@ -2211,7 +2346,17 @@ namespace JsmMind
 
         private int GetSubjectMaxWidth(SubjectBase subject)
         {
-            return GetSubjectMaxWidth(subject, 0);
+            int maxWidth =  GetSubjectMaxWidth(subject, 0);
+
+            foreach (SubjectBase n in SubjectBase.FloatSubjects)
+            {
+                int m = GetSubjectMaxWidth(n, 0);
+                if (m > maxWidth)
+                {
+                    maxWidth = m;
+                }
+            }
+            return maxWidth;
         }
         private int GetSubjectMaxWidth(SubjectBase subject,int max)
         { 
@@ -2242,7 +2387,17 @@ namespace JsmMind
         
         private int GetSubjectMaxHeight(SubjectBase subject)
         {
-            return GetSubjectMaxHeight(subject, 0);
+            int maxHeight= GetSubjectMaxHeight(subject, 0);
+
+            foreach (SubjectBase n in SubjectBase.FloatSubjects)
+            {
+                int m = GetSubjectMaxHeight(n, 0);
+                if (m > maxHeight)
+                {
+                    maxHeight = m;
+                } 
+            }
+            return maxHeight;
         }
         private int GetSubjectMaxHeight(SubjectBase subject, int max)
         {
