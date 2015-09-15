@@ -71,6 +71,7 @@ namespace JsmMind
     {
         public static float zoomValue = 1;
         static public List<SubjectBase> FloatSubjects = new List<SubjectBase>();
+        static public MapViewModel viewMode = MapViewModel.TreeMap;
         private string title = "主题";
         private string content = "";
 
@@ -93,6 +94,7 @@ namespace JsmMind
         protected int branchLinkWidth = 30;
         protected int branchSplitHeight = 12;
         protected int imageSplitWidth = 5;
+        protected int collapseRadius = 6;
 
 
         protected int leftBuffer = 30;
@@ -143,10 +145,23 @@ namespace JsmMind
         #region 方法
         /// <summary>
         /// 调整主题下的所有子主题位置
-        /// (注：该方法只调整当前主题的子主题，
+        /// (注：该方法只调整当前主题的子主题
         /// 实现其它主题联动需要再获取顶层主题调用该方法实现联动)
         /// </summary>
         public virtual void AdjustPosition()
+        {
+            if(viewMode== MapViewModel.ExpandRightSide)
+            {
+                AdjustExpandRightSide();
+            }
+            else if(viewMode == MapViewModel.TreeMap)
+            {
+                AdjustTreeMap();
+            }
+        }
+
+
+        private void AdjustExpandRightSide()
         {
             int hb = this.branchSplitHeight;  //间隔高度
             int hs = 0;   //主题高度，包含所有子主题
@@ -164,7 +179,7 @@ namespace JsmMind
             totalHeight -= hb;
 
             int top = this.CenterPoint.Y - totalHeight / 2;
-            if(top<this.height/2)
+            if (top < this.height / 2)
             {
                 top = this.height / 2;
             }
@@ -172,27 +187,27 @@ namespace JsmMind
             {
                 SubjectBase childSubject = this.ChildSubjects[i];
                 hs = childSubject.GetTotalHeight();
-                int x =  childSubject.centerPoint.X + childSubject.moveX; 
-                if (childSubject.moveX==-10000) 
+                int x = childSubject.centerPoint.X + childSubject.moveX;
+                if (childSubject.moveX == -10000)
                 {
                     x = this.CenterPoint.X + (this.Width / 2) + this.BranchLinkWidth + childSubject.width / 2 + childSubject.leftBuffer;
 
-                    if(childSubject.relateSubject!=null) //和关联节点同一位置
+                    if (childSubject.relateSubject != null) //和关联节点同一位置
                     {
                         x = childSubject.relateSubject.centerPoint.X + childSubject.width / 2;
                     }
-                } 
+                }
                 int y = top + hs / 2;
 
-                if(childSubject.GetType()==typeof(AttachSubject))
-                { 
+                if (childSubject.GetType() == typeof(AttachSubject))
+                {
 
-                } 
+                }
                 childSubject.CenterPoint = new Point(x, y);
-                
+
                 top = top + hs + hb;
-                 
-                foreach(SubjectBase chidsub in childSubject.childSubjects)
+
+                foreach (SubjectBase chidsub in childSubject.childSubjects)
                 {
                     chidsub.moveX = childSubject.moveX + childSubject.scalceWidth;
                 }
@@ -202,6 +217,54 @@ namespace JsmMind
             }
         }
 
+        private void AdjustTreeMap()
+        {
+            int hb = this.branchSplitHeight;  //间隔高度
+            int hs = 0;   //主题高度，包含所有子主题
+            int count = this.ChildSubjects.Count;
+            if (count == 0) return;
+            if (this.expanded == false) return;
+            int top = this.centerPoint.Y + this.height / 2 + this.BranchLinkWidth + hb;
+            for (int i = 0; i < count; i++)
+            {
+                SubjectBase childSubject = this.ChildSubjects[i];
+                hs = childSubject.GetTotalHeight();
+                int x = childSubject.centerPoint.X + childSubject.moveX;
+                if (childSubject.moveX == -10000)
+                {
+                    if (this.level == 0)
+                    {
+                        x = this.CenterPoint.X + (this.Width / 2) + this.BranchLinkWidth + childSubject.width / 2 + childSubject.leftBuffer;
+                    }
+                    else
+                    {
+                        x = this.CenterPoint.X - (this.Width / 2) + this.BranchLinkWidth / 2 + childSubject.Width / 2 + childSubject.leftBuffer;
+                    }
+                    if (childSubject.relateSubject != null) //和关联节点同一位置
+                    {
+                        x = childSubject.relateSubject.centerPoint.X + childSubject.width / 2;
+                    }
+                }
+                int y = top + childSubject.height / 2;
+
+                if (childSubject.GetType() == typeof(AttachSubject))
+                {
+
+                }
+                childSubject.CenterPoint = new Point(x, y);
+
+                top = top + hs + hb;
+
+                foreach (SubjectBase chidsub in childSubject.childSubjects)
+                {
+                    chidsub.moveX = childSubject.moveX + childSubject.scalceWidth;
+                }
+                childSubject.moveX = 0;
+                childSubject.scalceWidth = 0;
+                childSubject.AdjustPosition();
+            }
+        }
+         
         /// <summary>
         /// 调整主题大小
         /// </summary>
@@ -248,42 +311,6 @@ namespace JsmMind
                     topSubject.AdjustPosition();
                 }
             }
-        }
-
-        public void ZoomValue()
-        {
-            this.font = new Font("微软雅黑", this.font.Size / this.zoom * zoomValue);
-
-            this.centerPoint = new Point((int)(this.centerPoint.X / this.zoom * zoomValue), (int)(this.centerPoint.Y / this.zoom * zoomValue));
-            this.width = (int)(this.width / this.zoom * zoomValue);
-            this.height = (int)(this.height / this.zoom * zoomValue); 
-            this.marginWidth = (int)(this.marginWidth / this.zoom * zoomValue);
-            this.marginHeight = (int)(this.marginHeight / this.zoom * zoomValue);
-            this.branchLinkWidth = (int)(this.branchLinkWidth / this.zoom * zoomValue);
-            this.branchSplitHeight = (int)(this.branchSplitHeight / this.zoom * zoomValue);
-            this.imageSplitWidth = (int)(this.imageSplitWidth / this.zoom * zoomValue); 
-            this.leftBuffer = (int)(this.leftBuffer / this.zoom * zoomValue);  
-              
-            this.zoom= zoomValue; 
-        }
-
-
-        /// <summary>
-        /// 是否展开主题
-        /// </summary>
-        /// <param name="isExpand">是否展开</param>
-        public virtual void CollapseChildSubject(bool isExpand)
-        {
-            this.expanded = isExpand;
-            if (this.parentSubject != null)
-            {
-                this.parentSubject.AdjustPosition();
-            }
-            SubjectBase topSubject = this.GetTopSubect();
-            if (topSubject != null)
-            {
-                topSubject.AdjustPosition();
-            }
         } 
 
         /// <summary>
@@ -313,8 +340,11 @@ namespace JsmMind
                 this.moveX = 0;
 
                 this.AdjustPosition();
-                if (parentSubject != null)
+                while (parentSubject != null)
+                {
                     parentSubject.AdjustPosition();
+                    parentSubject = parentSubject.ParentSubject;
+                }  
 
                 this.DragOut = false;
                 return;
@@ -383,8 +413,12 @@ namespace JsmMind
             } 
             this.moveX = 0; 
             this.AdjustPosition();
-            if (parentSubject != null)
+              
+            while (parentSubject != null)
+            {
                 parentSubject.AdjustPosition();
+                parentSubject = parentSubject.ParentSubject;
+            } 
         }
 
 
@@ -399,6 +433,10 @@ namespace JsmMind
 
             if (!this.childSubjects.Contains(subject))
             {
+                if(this.expanded==false)
+                {
+                    this.expanded = true;
+                }
                 if (this.childSubjects.Count == 0 || position >= this.childSubjects.Count || position<0)
                 {
                     this.childSubjects.Add(subject); 
@@ -409,25 +447,44 @@ namespace JsmMind
                 }
                 this.AdjustPosition();
 
-                SubjectBase topSubject = this.GetTopSubect();
-                if (topSubject != null)
+                SubjectBase parentSubject = this.ParentSubject;
+                while(parentSubject!=null)
                 {
-                    topSubject.AdjustPosition();
-                } 
+                    parentSubject.AdjustPosition();
+                    parentSubject = parentSubject.ParentSubject;
+                }
+
+                //SubjectBase topSubject = this.GetTopSubect();
+                //if (topSubject != null)
+                //{
+                //    topSubject.AdjustPosition();
+                //} 
             }  
         } 
 
+        /// <summary>
+        /// 移除主题
+        /// </summary>
+        /// <param name="subject"></param>
         public void RemoveSubject(SubjectBase subject)
         {
             if (this.ChildSubjects.Contains(subject))
             {
-                this.ChildSubjects.Remove(subject); this.AdjustPosition();
+                this.ChildSubjects.Remove(subject);
+                this.AdjustPosition();
 
-                SubjectBase topSubject = this.GetTopSubect();
-                if (topSubject != null)
+                SubjectBase parentSubject = this.ParentSubject;
+                while (parentSubject != null)
                 {
-                    topSubject.AdjustPosition();
-                }
+                    parentSubject.AdjustPosition();
+                    parentSubject = parentSubject.ParentSubject;
+                } 
+
+                //SubjectBase topSubject = this.GetTopSubect();
+                //if (topSubject != null)
+                //{
+                //    topSubject.AdjustPosition();
+                //}
             } 
         }
     
@@ -440,7 +497,46 @@ namespace JsmMind
             SubjectPicture subjectPicture = new SubjectPicture(url);
             this.subjectPictures.Add(subjectPicture);
             this.AdjustSubjectSize();
-        }  
+        }
+
+        /// <summary>
+        /// 按比例缩放主题
+        /// </summary>
+        public void ZoomValue()
+        {
+            this.font = new Font("微软雅黑", this.font.Size / this.zoom * zoomValue);
+
+            this.centerPoint = new Point((int)(this.centerPoint.X / this.zoom * zoomValue), (int)(this.centerPoint.Y / this.zoom * zoomValue));
+            this.width = (int)(this.width / this.zoom * zoomValue);
+            this.height = (int)(this.height / this.zoom * zoomValue);
+            this.marginWidth = (int)(this.marginWidth / this.zoom * zoomValue);
+            this.marginHeight = (int)(this.marginHeight / this.zoom * zoomValue);
+            this.branchLinkWidth = (int)(this.branchLinkWidth / this.zoom * zoomValue);
+            this.branchSplitHeight = (int)(this.branchSplitHeight / this.zoom * zoomValue);
+            this.imageSplitWidth = (int)(this.imageSplitWidth / this.zoom * zoomValue);
+            this.leftBuffer = (int)(this.leftBuffer / this.zoom * zoomValue); 
+            this.collapseRadius = (int)(this.collapseRadius / this.zoom * zoomValue); 
+
+            this.zoom = zoomValue;
+        }
+
+        /// <summary>
+        /// 是否展开主题
+        /// </summary>
+        /// <param name="isExpand">是否展开</param>
+        public virtual void CollapseChildSubject(bool isExpand)
+        {
+            this.expanded = isExpand;
+            if (this.parentSubject != null)
+            {
+                this.parentSubject.AdjustPosition();
+            }
+            SubjectBase topSubject = this.GetTopSubect();
+            if (topSubject != null)
+            {
+                topSubject.AdjustPosition();
+            }
+        } 
 
         /// <summary>
         /// 获取主题显示总高度（所有子主题）
@@ -449,49 +545,127 @@ namespace JsmMind
         public virtual int GetTotalHeight()
         {
             int hb = 0;
-            if(this.childSubjects.Count<1 || this.expanded==false)
+            if (this.childSubjects.Count < 1)
             {
                 hb = this.height;
             }
             else
             {
-                SubjectBase firstSubject=this.childSubjects[0];
-                SubjectBase lastSubject =this.childSubjects[this.childSubjects.Count-1];
-                 
-                int minHeight = firstSubject.centerPoint.Y - firstSubject.height / 2;
-                int maxHeight = lastSubject.centerPoint.Y + lastSubject.height / 2;
-
-                while(firstSubject!=null)
-                {
-                    if (firstSubject.childSubjects.Count == 0) break;
-                    if (firstSubject.expanded == false) break;
-                    firstSubject = firstSubject.childSubjects[0]; 
-                    int minPos = firstSubject.centerPoint.Y - firstSubject.height / 2;
-                    if(minPos<minHeight)
-                    {
-                        minHeight = minPos;
-                    } 
-                }
-                while(lastSubject!=null)
-                {
-                    if (lastSubject.childSubjects.Count == 0) break;
-                    if (lastSubject.expanded == false) break;
-                    lastSubject = lastSubject.childSubjects[lastSubject.childSubjects.Count - 1];
-                    int maxPos = lastSubject.centerPoint.Y + lastSubject.height / 2;
-                    if(maxPos>maxHeight)
-                    {
-                        maxHeight = maxPos;
-                    }
-                }
-
-                hb = maxHeight - minHeight;
-                if(hb<this.height)
+                int min = GetSubjectMinHeight(this, this.centerPoint.Y);
+                int max = GetSubjectMaxHeight(this, 0);
+                hb = max - min;
+                if (hb < this.height)
                 {
                     hb = this.height;
                 }
             }
+            //else
+            //{
+            //    SubjectBase firstSubject=this.childSubjects[0];
+            //    SubjectBase lastSubject =this.childSubjects[this.childSubjects.Count-1];
+                 
+            //    int minHeight = firstSubject.centerPoint.Y - firstSubject.height / 2;
+            //    int maxHeight = lastSubject.centerPoint.Y + lastSubject.height / 2;
+
+            //    while(firstSubject!=null)
+            //    {
+            //        if (firstSubject.childSubjects.Count == 0) break;
+            //        if (firstSubject.expanded == false) break;
+            //        firstSubject = firstSubject.childSubjects[0]; 
+            //        int minPos = firstSubject.centerPoint.Y - firstSubject.height / 2;
+            //        if(minPos<minHeight)
+            //        {
+            //            minHeight = minPos;
+            //        } 
+            //    }
+            //    while(lastSubject!=null)
+            //    {
+            //        if (lastSubject.childSubjects.Count == 0) break;
+            //        if (lastSubject.expanded == false) break;
+            //        lastSubject = lastSubject.childSubjects[lastSubject.childSubjects.Count - 1];
+            //        int maxPos = lastSubject.centerPoint.Y + lastSubject.height / 2;
+            //        if(maxPos>maxHeight)
+            //        {
+            //            maxHeight = maxPos;
+            //        }
+            //    }
+
+            //    hb = maxHeight - minHeight;
+            //    if(hb<this.height)
+            //    {
+            //        hb = this.height;
+            //    }
+            //}
+          
+
             return hb;
         }
+
+        private int GetSubjectMinHeight(SubjectBase subject, int min)
+        {
+            int minHeight = min;
+            if (subject.Expanded)
+            {
+                foreach (SubjectBase n in subject.ChildSubjects)
+                {
+                    if (n.Expanded)
+                    {
+                        minHeight = GetSubjectMinHeight(n, minHeight);
+                    }
+
+                    if (n.CenterPoint.Y - n.Height / 2 < minHeight)
+                    {
+                        minHeight = n.CenterPoint.Y - n.Height / 2;
+                    }
+                }
+            }
+
+            if (subject.CenterPoint.Y - subject.Height / 2 < minHeight)
+            {
+                minHeight = subject.CenterPoint.Y - subject.Height / 2;
+            }
+            return minHeight;
+        } 
+
+        private int GetSubjectMaxHeight(SubjectBase subject, int max)
+        {
+            int maxHeight = max;
+            if (subject.Expanded)
+            {
+                foreach (SubjectBase n in subject.ChildSubjects)
+                {
+                    if (n.Expanded)
+                    {
+                        maxHeight = GetSubjectMaxHeight(n, maxHeight);
+                    }
+                    else
+                    {
+                        if (viewMode == MapViewModel.TreeMap && n.childSubjects.Count > 0)
+                        {
+                            maxHeight = n.CenterPoint.Y + n.Height / 2 + n.branchLinkWidth+n.CollapseRadius;
+                        } 
+                    }
+
+                    if (n.CenterPoint.Y + n.Height / 2 > maxHeight)
+                    {
+                        maxHeight = n.CenterPoint.Y + n.Height / 2;
+                    }
+                }
+            }
+            else
+            {
+                if(viewMode== MapViewModel.TreeMap && subject.childSubjects.Count>0)
+                {
+                    maxHeight = subject.CenterPoint.Y + subject.Height / 2+subject.branchLinkWidth+subject.collapseRadius;
+                }
+            }
+
+            if (subject.CenterPoint.Y + subject.Height / 2 > maxHeight)
+            {
+                maxHeight = subject.CenterPoint.Y + subject.Height / 2;
+            }
+            return maxHeight;
+        } 
          
         /// <summary>
         /// 设置主题样式
@@ -695,7 +869,15 @@ namespace JsmMind
         {
             get { return imageSplitWidth; }
             set { imageSplitWidth = value; }
-        } 
+        }
+
+        public int CollapseRadius
+        {
+            get { return collapseRadius; }
+            set { collapseRadius = value; }
+        }
+
+
         public bool Expanded
         {
             get { return expanded; } 
@@ -928,8 +1110,7 @@ namespace JsmMind
         protected int taskHeight = 20;
         protected int lfWidth = 60;
         protected int ltHeight = 0;
-        protected int colCount = 7;
-        private int collaspRadius = 6;
+        protected int colCount = 7; 
 		protected bool showlines = false, showrootlines = false, showplusminus = true;
 
 		protected ListDictionary pmRects;
@@ -940,9 +1121,7 @@ namespace JsmMind
 		protected Bitmap bmpMinus, bmpPlus;
             
         private List<SubjectBase> subjectNodes;
-
-        private int maxWidth = 0;
-          
+         
 		private bool mouseActivate = false;
 
 		private bool allCollapsed = false;
@@ -952,8 +1131,7 @@ namespace JsmMind
         private SubjectBase selectedSubject = null;
 
         private SubjectBase activeSubject = null;
-        private SubjectBase collapseSubject = null;
-        private SubjectBase editSubject = null;
+        private SubjectBase collapseSubject = null; 
 
         private SubjectBase linkSubject = null;
 
@@ -974,7 +1152,7 @@ namespace JsmMind
         private int selectionEndLine = 0;
 
         private DateTime currentTime=DateTime.Now; 
-        private MapViewModel mapViewModel = MapViewModel.ExpandTwoSides;
+        private MapViewModel mapViewModel = MapViewModel.TreeMap;
          
         TextBox txtNode = null;
         Image imgRender = null;
@@ -1547,6 +1725,7 @@ namespace JsmMind
             {
                 RenderSubject(SubjectBase.FloatSubjects[i], g, r, 0);
             }
+
             if (dragSubject != null)
             {
                 RenderDragSubject(dragSubject, g, r, 0);
@@ -1647,21 +1826,18 @@ namespace JsmMind
             g.SmoothingMode = SmoothingMode.Default;
         }
 
-
         private void RenderSubjectParentLink(Graphics g, Rectangle r, SubjectBase subject)
         {
             if (subject.ParentSubject == null) return;
             g.Clip = new System.Drawing.Region(r);
-            if (mapViewModel == MapViewModel.ExpandTwoSides)
+
+            if (subject.GetType() == typeof(AttachSubject))
             {
-                if (subject.GetType() == typeof(AttachSubject))
-                {
-                    RenderLinkAttach(g, r, subject);
-                }
-                else
-                {
-                    RenderLinkBranch(g, r, subject);
-                }
+                RenderLinkAttach(g, r, subject);
+            }
+            else
+            {
+                RenderLinkBranch(g, r, subject);
             }
         }
 
@@ -1669,10 +1845,8 @@ namespace JsmMind
         {
             if (subject.LinkSubject == null) return;
             g.Clip = new System.Drawing.Region(r);
-            if (mapViewModel == MapViewModel.ExpandTwoSides)
-            {
-                RenderLinkRelate(g, r, subject);
-            }
+
+            RenderLinkRelate(g, r, subject);
         }
         private void RenderSubjectBranchLink(Graphics g, Rectangle r, SubjectBase subject)
         {
@@ -1680,11 +1854,27 @@ namespace JsmMind
             g.Clip = new System.Drawing.Region(r);
 
             //先绘制主题的分支连接线和折叠按钮，再绘制主题内容显示最前  
-            int x1 = subject.RectAreas.Left + subject.RectAreas.Width;
-            int y1 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
+            int x1 = 0;
+            int y1 = 0; 
+            int x2 = 0;
+            int y2 = 0;
+            if (mapViewModel == MapViewModel.ExpandRightSide)
+            { 
+                x1 = subject.RectAreas.Left + subject.RectAreas.Width;
+                y1 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
 
-            int x2 = x1 + subject.BranchLinkWidth;
-            int y2 = y1;
+                x2 = x1 + subject.BranchLinkWidth;
+                y2 = y1;
+            }
+            else if(mapViewModel== MapViewModel.TreeMap)
+            {
+                x1 = subject.RectAreas.Left + subject.BranchLinkWidth/2;
+                y1 = subject.RectAreas.Top + subject.RectAreas.Height;
+
+                x2 = x1;
+                y2 = y1 + subject.BranchLinkWidth;
+            } 
+
 
             Color penColor = subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor;
             Pen penLine = new Pen(penColor, 1.0f);
@@ -1700,7 +1890,7 @@ namespace JsmMind
                 colorCollapseB = Color.LightSteelBlue;
             }
 
-            int collaspradius = collaspRadius;
+            int collaspradius = subject.CollapseRadius;
             Rectangle srCollaspe = new Rectangle(x2 - collaspradius, y2 - collaspradius, collaspradius * 2, collaspradius * 2);
             subject.RectCollapse = srCollaspe;
             g.FillEllipse(new SolidBrush(colorCollapseB), srCollaspe);
@@ -1784,12 +1974,32 @@ namespace JsmMind
             SubjectBase parentSubject = subject.ParentSubject; 
             int branchLinkWidth = parentSubject.BranchLinkWidth;
 
+
             //父主题分支连接点
-            int x1 = parentSubject.RectAreas.Left + parentSubject.RectAreas.Width + branchLinkWidth;
-            int y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height / 2; 
+            int x1 = 0;
+            int y1 = 0;
             //子主体连接线起始点
-            int x2 = subject.RectAreas.Left;
-            int y2 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
+            int x2 = 0;
+            int y2 = 0;
+            if (mapViewModel == MapViewModel.ExpandRightSide)
+            {
+                //父主题分支连接点
+                x1 = parentSubject.RectAreas.Left + parentSubject.RectAreas.Width + branchLinkWidth;
+                y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height / 2;
+                //子主体连接线起始点
+                x2 = subject.RectAreas.Left;
+                y2 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
+            }
+            else if(mapViewModel== MapViewModel.TreeMap)
+            {
+                //父主题分支连接点
+                x1 = parentSubject.RectAreas.Left + branchLinkWidth/2;
+                y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height +branchLinkWidth;
+                //子主体连接线起始点
+                x2 = subject.RectAreas.Left;
+                y2 = subject.RectAreas.Top + subject.RectAreas.Height / 2; 
+            }
+                 
              
             if (x1 == x2 || y1 == y2)
             {
@@ -1914,7 +2124,7 @@ namespace JsmMind
             g.DrawLines(penLine, curvePoints.ToArray());
         }
         private void RenderLinkAttach(Graphics g, Rectangle r, SubjectBase subject)
-        {
+        { 
             Pen penLine = new Pen(subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor, 1.0f);
             SubjectBase relateSubject =subject.RelateSubject;
             //管理主题中心点
@@ -2292,55 +2502,44 @@ namespace JsmMind
         private int vsize, hsize;
         public override void AdjustScrollbars()
         {
-            if(mapViewModel== MapViewModel.ExpandTwoSides)
+            int allRowsHeight = GetSubjectMaxHeight(centerProject);
+            allRowsHeight += 20;
+            int allColsWidth = GetSubjectMaxWidth(centerProject);
+            allColsWidth += 20;
+            vsize = vscrollBar.Width;
+            vscrollBar.Left = this.ClientRectangle.Left + this.ClientRectangle.Width - vscrollBar.Width;
+            vscrollBar.Top = this.ClientRectangle.Top + headerBuffer;
+            vscrollBar.Height = this.ClientRectangle.Height - hsize - headerBuffer;
+            vscrollBar.Maximum = allRowsHeight;
+            vscrollBar.LargeChange = (this.ClientRectangle.Height - headerBuffer - hsize - 4 > 0 ? this.ClientRectangle.Height - headerBuffer - hsize - 4 : 0);
+            if (allRowsHeight > this.ClientRectangle.Height - headerBuffer - 4 - hsize)
             {
-                int allRowsHeight = GetSubjectMaxHeight(centerProject);
-                allRowsHeight += 20;
-                int allColsWidth = GetSubjectMaxWidth(centerProject);
-                allColsWidth += 20; 
-                vsize = vscrollBar.Width; 
-                vscrollBar.Left = this.ClientRectangle.Left + this.ClientRectangle.Width - vscrollBar.Width;
-                vscrollBar.Top = this.ClientRectangle.Top + headerBuffer;
-                vscrollBar.Height = this.ClientRectangle.Height - hsize - headerBuffer;
-                vscrollBar.Maximum = allRowsHeight;
-                vscrollBar.LargeChange = (this.ClientRectangle.Height - headerBuffer - hsize - 4 > 0 ? this.ClientRectangle.Height - headerBuffer - hsize - 4 : 0);
-                if (allRowsHeight > this.ClientRectangle.Height - headerBuffer - 4 - hsize)
-                {
-                    vscrollBar.Show();
-                    vsize = vscrollBar.Width;
-                }
-                else
-                {
-                    vscrollBar.Hide();
-                    vscrollBar.Value = 0;
-                    vsize = 0;
-                }
-
-                hsize = hscrollBar.Height; 
-                hscrollBar.Left = this.ClientRectangle.Left;
-                hscrollBar.Top = this.ClientRectangle.Top + this.ClientRectangle.Height - hscrollBar.Height;
-                hscrollBar.Width = this.ClientRectangle.Width - vsize;
-                hscrollBar.LargeChange = (this.ClientRectangle.Width - vsize - 4 > 0 ? this.ClientRectangle.Width - vsize - 4 : 0);
-                hscrollBar.Maximum = allColsWidth;
-                if (allColsWidth > this.ClientRectangle.Width - 4 - vsize)
-                {
-                    hscrollBar.Show();
-                    hsize = hscrollBar.Height;
-                }
-                else
-                {
-                    hscrollBar.Hide();
-                    hscrollBar.Value = 0;
-                    hsize = 0;
-                } 
-                 
+                vscrollBar.Show();
+                vsize = vscrollBar.Width;
             }
             else
             {
-
                 vscrollBar.Hide();
                 vscrollBar.Value = 0;
                 vsize = 0;
+            }
+
+            hsize = hscrollBar.Height;
+            hscrollBar.Left = this.ClientRectangle.Left;
+            hscrollBar.Top = this.ClientRectangle.Top + this.ClientRectangle.Height - hscrollBar.Height;
+            hscrollBar.Width = this.ClientRectangle.Width - vsize;
+            hscrollBar.LargeChange = (this.ClientRectangle.Width - vsize - 4 > 0 ? this.ClientRectangle.Width - vsize - 4 : 0);
+            hscrollBar.Maximum = allColsWidth;
+            if (allColsWidth > this.ClientRectangle.Width - 4 - vsize)
+            {
+                hscrollBar.Show();
+                hsize = hscrollBar.Height;
+            }
+            else
+            {
+                hscrollBar.Hide();
+                hscrollBar.Value = 0;
+                hsize = 0;
             }
         }
 
