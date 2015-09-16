@@ -71,11 +71,14 @@ namespace JsmMind
     {
         public static float zoomValue = 1;
         static public List<SubjectBase> FloatSubjects = new List<SubjectBase>();
-        static public MapViewModel viewMode = MapViewModel.Structure;
+        static public MapViewModel viewMode = MapViewModel.ExpandTwoSides;
         private string title = "主题";
         private string content = "";
 
         protected int level = 0;
+
+        protected int direction = 1;
+
 
         private Font font = new Font("微软雅黑", 10.0f);
         private Color foreColor = Color.Black;
@@ -151,7 +154,38 @@ namespace JsmMind
         /// </summary>
         public virtual void AdjustPosition()
         {
-            if(viewMode== MapViewModel.ExpandRightSide)
+            if(viewMode== MapViewModel.ExpandTwoSides)
+            { 
+                if (this.GetType() == typeof(CenterSubject))
+                {
+                    List<SubjectBase> lstLeftSubjecs = new List<SubjectBase>();
+                    List<SubjectBase> lstRightSubjecs = new List<SubjectBase>();
+
+                    foreach (SubjectBase subject in this.ChildSubjects)
+                    {
+                        if (subject.direction == 1)
+                        {
+                            lstRightSubjecs.Add(subject);
+                        }
+                        else
+                        {
+                            lstLeftSubjecs.Add(subject);
+                        }
+                    }
+
+                    if (lstLeftSubjecs.Count > 0)
+                        AdjustExpandTowSides(lstLeftSubjecs,-1);
+                    if (lstRightSubjecs.Count > 0)
+                        AdjustExpandTowSides(lstRightSubjecs,1); 
+                }
+                else
+                { 
+                    AdjustExpandTowSides();
+                }
+
+
+            }
+            else if(viewMode== MapViewModel.ExpandRightSide)
             {
                 AdjustExpandRightSide();
             }
@@ -162,6 +196,66 @@ namespace JsmMind
             else if(viewMode== MapViewModel.Structure)
             {
                 AdjustStructure();
+            }
+        }
+        private void AdjustExpandTowSides(List<SubjectBase> lstSubjecs=null,int side=0)
+        {  
+            if(lstSubjecs==null)
+            {
+                lstSubjecs = this.ChildSubjects;
+            }
+
+            int d = 1;  //扩展方向
+            int hb = this.branchSplitHeight;  //间隔高度
+            int hs = 0;   //主题高度，包含所有子主题
+            int count = lstSubjecs.Count;
+            if (count == 0) return;
+            if (this.expanded == false) return;
+            int totalHeight = 0;
+            for (int i = 0; i < count; i++)
+            {
+                SubjectBase childSubject = lstSubjecs[i];
+                hs = childSubject.GetTotalHeight();
+                totalHeight += hs;
+                totalHeight += hb;
+            }
+            totalHeight -= hb;
+
+            int top = this.CenterPoint.Y - totalHeight / 2;
+            if (top < this.height / 2)
+            {
+                top = this.height / 2;
+            }
+            for (int i = 0; i < count; i++)
+            {
+                SubjectBase childSubject = lstSubjecs[i];
+                //使用父主题方向
+                d = side != 0 ? side : this.direction;
+                hs = childSubject.GetTotalHeight();
+                int x = childSubject.centerPoint.X + childSubject.moveX;
+                if (childSubject.moveX == -10000)
+                {
+                    x = this.CenterPoint.X + d * (this.Width / 2) + d * this.BranchLinkWidth + d * (childSubject.width / 2) + d * childSubject.leftBuffer;
+
+                    if (childSubject.relateSubject != null) //和关联节点同一位置
+                    {
+                        x = childSubject.relateSubject.centerPoint.X + d * (childSubject.width / 2);
+                    }
+                }
+                int y = top + hs / 2;
+
+                childSubject.CenterPoint = new Point(x, y);
+
+                top = top + hs + hb;
+
+                foreach (SubjectBase chidsub in childSubject.childSubjects)
+                {
+                    chidsub.moveX = childSubject.moveX + childSubject.scalceWidth;
+                    chidsub.direction = d;
+                }
+                childSubject.moveX = 0;
+                childSubject.scalceWidth = 0;
+                childSubject.AdjustPosition();
             }
         }
 
@@ -401,7 +495,7 @@ namespace JsmMind
             {
                 h = (int)size.Height;
             }
-            int dx = (this.marginWidth + w + this.marginWidth - this.width)/2;
+            int dx = this.direction*(this.marginWidth + w + this.marginWidth - this.width)/2;
             int dy = (this.marginHeight + h + this.marginHeight - this.height)/2;
             this.width = this.marginWidth + w + this.marginWidth;
             this.height = this.marginHeight + h + this.marginHeight;
@@ -477,11 +571,11 @@ namespace JsmMind
                     {
                         SubjectBase subject = this.parentSubject.childSubjects[i];
 
-                        if (movePoint.X < subject.centerPoint.X)
+                        if (subject != this)
                         {
-                            if (subject != this)
-                            {
 
+                            if (movePoint.X < subject.centerPoint.X)
+                            {
                                 if (bLeft)
                                 {
                                     this.parentSubject.childSubjects.Remove(this);
@@ -492,43 +586,51 @@ namespace JsmMind
                                     this.parentSubject.childSubjects.Remove(this);
                                     this.parentSubject.childSubjects.Insert(i - 1, this);
                                 }
-                            }
-                            else
-                            {
 
+                                break;
                             }
-                            break;
-                        }
-                        //移动到最后
-                        if (i == this.parentSubject.childSubjects.Count - 1)
-                        {
-                            if (movePoint.X > subject.centerPoint.X)
+                            //移动到最后
+                            if (i == this.parentSubject.childSubjects.Count - 1)
                             {
-                                this.parentSubject.childSubjects.Remove(this);
-                                this.parentSubject.childSubjects.Add(this);
+                                if (movePoint.X > subject.centerPoint.X)
+                                {
+                                    this.parentSubject.childSubjects.Remove(this);
+                                    this.parentSubject.childSubjects.Add(this);
+                                }
                             }
                         }
+                    }   
 
-                    } 
                 }
                 else
                 {
-                    int x = this.parentSubject.CenterPoint.X + (this.parentSubject.Width / 2) + this.parentSubject.BranchLinkWidth + this.width / 2 + this.leftBuffer;
-                    if (x > movePoint.X)
+                    if(this.direction==1)
                     {
-                        movePoint.X = x;
+                        int x = this.parentSubject.CenterPoint.X + (this.parentSubject.Width / 2) + this.parentSubject.BranchLinkWidth + this.width / 2 + this.leftBuffer;
+                        if (x > movePoint.X)
+                        {
+                            movePoint.X = x;
+                        }
                     }
+                    else if(direction==-1)
+                    {
+                        int x = this.parentSubject.CenterPoint.X - (this.parentSubject.Width / 2) - this.parentSubject.BranchLinkWidth - this.width / 2 - this.leftBuffer;
+                        if (x < movePoint.X)
+                        {
+                            movePoint.X = x;
+                        } 
+                    }
+                    
 
                     bool bUp = movePoint.Y < this.centerPoint.Y;
                     for (int i = 0; i < this.parentSubject.childSubjects.Count; i++)
                     {
                         SubjectBase subject = this.parentSubject.childSubjects[i];
 
-                        if (movePoint.Y < subject.centerPoint.Y)
+                        if (subject != this && subject.direction == this.direction)
                         {
-                            if (subject != this)
+                            if (movePoint.Y < subject.centerPoint.Y)
                             {
-
                                 if (bUp)
                                 {
                                     this.parentSubject.childSubjects.Remove(this);
@@ -539,23 +641,29 @@ namespace JsmMind
                                     this.parentSubject.childSubjects.Remove(this);
                                     this.parentSubject.childSubjects.Insert(i - 1, this);
                                 }
-                            }
-                            else
-                            {
 
+                                break;
                             }
-                            break;
                         }
+
                         //移动到最后
                         if (i == this.parentSubject.childSubjects.Count - 1)
                         {
-                            if (movePoint.Y > subject.centerPoint.Y)
+                            //找到同方向最后一个主题
+
+                            for (int l = this.parentSubject.childSubjects.Count - 1; l >= 0; l--)
                             {
-                                this.parentSubject.childSubjects.Remove(this);
-                                this.parentSubject.childSubjects.Add(this);
+                                SubjectBase lastSubject = this.parentSubject.childSubjects[l];
+                                if (lastSubject.direction == this.direction)
+                                {
+                                    if (movePoint.Y > lastSubject.centerPoint.Y)
+                                    {
+                                        this.parentSubject.childSubjects.Remove(this);
+                                        this.parentSubject.childSubjects.Add(this);
+                                    }
+                                }
                             }
                         }
-
                     }
 
                     if (this.GetType() == typeof(TitleSubject))
@@ -990,13 +1098,17 @@ namespace JsmMind
         {
             get { return content; }
             set { content = value; }
-        }
-
+        } 
         public int Level
         {
             get { return level; } 
         }
-        
+
+        public int Direction
+        {
+            get { return direction; }
+            set { direction = value; }
+        }
         public Font Font
         {
             get { return font; }
@@ -1212,17 +1324,34 @@ namespace JsmMind
     [Serializable]
     public class TitleSubject : SubjectBase
     {
-        public TitleSubject(SubjectBase fatherSubject)
-        { 
+        /// <summary>
+        /// 初始化主题
+        /// </summary>
+        /// <param name="fatherSubject">上层主题</param>
+        /// <param name="direction">方向，-1表示向左，1表示向右</param>
+        public TitleSubject(SubjectBase fatherSubject,int direction)
+        {
+            if(fatherSubject.GetType()== typeof(CenterSubject))
+            {
+                this.Direction = direction; 
+            }
             this.ParentSubject = fatherSubject; 
         }
-
+        /// <summary>
+        /// 初始化主题
+        /// </summary>
+        /// <param name="brotherSubject">同层主题</param>
+        /// <param name="insertUp">是否向上插入</param>
         public TitleSubject(SubjectBase brotherSubject,bool insertUp)
         { 
             SubjectBase fatherSubject = brotherSubject.ParentSubject;
             if (fatherSubject == null)
             {
                 return;
+            }
+            if (fatherSubject.GetType() == typeof(CenterSubject))
+            {
+                this.Direction = brotherSubject.Direction;
             }
 
             int index = fatherSubject.ChildSubjects.IndexOf(brotherSubject);
@@ -1598,13 +1727,13 @@ namespace JsmMind
                             switch (plus)
                             {
                                 case 1:
-                                    subject = new TitleSubject(selectedSubject);
+                                    subject = new TitleSubject(selectedSubject, -1);
                                     break;
                                 case 2:
                                     subject = new TitleSubject(selectedSubject,true);
                                     break;
                                 case 3:
-                                    subject = new TitleSubject(selectedSubject);
+                                    subject = new TitleSubject(selectedSubject,1);
                                     break;
                                 case 4:
                                     subject = new TitleSubject(selectedSubject,false);
@@ -2051,6 +2180,54 @@ namespace JsmMind
             int y1 = 0; 
             int x2 = 0;
             int y2 = 0;
+            if(ViewModel== MapViewModel.ExpandTwoSides)
+            {
+                bool bDrawRight = false;
+                bool bDrawLeft = false;
+                if(subject.GetType()== typeof(CenterSubject))
+                {
+                    foreach(SubjectBase childSubject in  subject.ChildSubjects)
+                    {
+                        if(childSubject.Direction==1)
+                        {
+                            bDrawRight = true;
+                        }
+                        if(childSubject.Direction==-1)
+                        {
+                            bDrawLeft = true;
+                        }
+                        if (bDrawRight && bDrawLeft) break;
+                    }
+                }
+                else
+                {
+                    bDrawRight = subject.Direction == 1;
+                    bDrawLeft = subject.Direction == -1;
+                }
+
+                if (bDrawRight)
+                {
+                    x1 = subject.RectAreas.Left + subject.RectAreas.Width;
+                    y1 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
+
+                    x2 = x1 + subject.BranchLinkWidth;
+                    y2 = y1;
+
+                    RendrBranchLink(g, r, subject, x1, y1, x2, y2);
+                }
+                if(bDrawLeft)
+                {
+                    x1 = subject.RectAreas.Left;
+                    y1 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
+
+                    x2 = x1 - subject.BranchLinkWidth;
+                    y2 = y1;
+
+                    RendrBranchLink(g, r, subject, x1, y1, x2, y2);
+                }
+                return;
+            }
+
             if (ViewModel == MapViewModel.ExpandRightSide)
             { 
                 x1 = subject.RectAreas.Left + subject.RectAreas.Width;
@@ -2086,8 +2263,11 @@ namespace JsmMind
                     y2 = y1 + subject.BranchLinkWidth;
                 }
             }
+            RendrBranchLink(g, r, subject, x1, y1, x2, y2);
+        }
 
-
+        private void RendrBranchLink(Graphics g, Rectangle r, SubjectBase subject,int x1,int y1,int x2,int y2)
+        {
             Color penColor = subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor;
             Pen penLine = new Pen(penColor, 1.0f);
             //绘制分支主线
@@ -2192,7 +2372,31 @@ namespace JsmMind
             int y1 = 0;
             //子主体连接线起始点
             int x2 = 0;
-            int y2 = 0;
+            int y2 = 0;  
+
+            if(ViewModel== MapViewModel.ExpandTwoSides)
+            {
+                if (subject.Direction == 1)
+                {
+                    //父主题分支连接点
+                    x1 = parentSubject.RectAreas.Left + parentSubject.RectAreas.Width + branchLinkWidth;
+                    y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height / 2;
+                    //子主体连接线起始点
+                    x2 = subject.RectAreas.Left;
+                    y2 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
+                }
+                else
+                {
+                    //父主题分支连接点
+                    x1 = parentSubject.RectAreas.Left - branchLinkWidth;
+                    y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height / 2;
+                    //子主体连接线起始点
+                    x2 = subject.RectAreas.Left + subject.Width;
+                    y2 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
+
+                }
+
+            }
             if (ViewModel == MapViewModel.ExpandRightSide)
             {
                 //父主题分支连接点
@@ -2266,13 +2470,16 @@ namespace JsmMind
                 }
                 else
                 { 
-                    rect = new Rectangle(x2, y1, -(x2 - x1), -(y2 - y1));
+                    rect = new Rectangle(x2, y2, -(x2 - x1), -(y2 - y1));
                     direction = 0;
                 }
 
             }
 
-            if (ViewModel == MapViewModel.ExpandRightSide)
+            if(ViewModel== MapViewModel.ExpandTwoSides)
+            { 
+            }
+            else if (ViewModel == MapViewModel.ExpandRightSide)
             { 
             }
             else if (ViewModel == MapViewModel.TreeMap)
@@ -2616,7 +2823,7 @@ namespace JsmMind
             {
                 roundedRect.AddLine(rect.Right, rect.Y , rect.Right, rect.Y + rect.Height - cornerRadius * 2);
                 roundedRect.AddArc(rect.X + rect.Width - cornerRadius * 2, rect.Y + rect.Height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2, 0, 90);
-                roundedRect.AddLine(rect.Right - cornerRadius * 2, rect.Bottom, rect.X + cornerRadius * 2, rect.Bottom);
+                roundedRect.AddLine(rect.X, rect.Bottom, rect.Right- cornerRadius * 2, rect.Bottom);
                 
             }
             else if(direction==2)
