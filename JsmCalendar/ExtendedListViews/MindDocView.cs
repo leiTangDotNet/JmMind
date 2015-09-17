@@ -25,11 +25,9 @@ namespace JsmMind
 {
     #region Enumerations
     public enum MapViewModel { ExpandTwoSides, ExpandRightSide, TreeMap, Structure };
-	#endregion
-
+	#endregion 
 	#region Event Stuff
-	#endregion
-
+	#endregion 
     #region SubjectPicture
     [Serializable]
     public class SubjectPicture
@@ -71,7 +69,7 @@ namespace JsmMind
     {
         public static float zoomValue = 1;
         static public List<SubjectBase> FloatSubjects = new List<SubjectBase>();
-        static public MapViewModel viewMode = MapViewModel.ExpandTwoSides;
+        static public MapViewModel viewMode = MapViewModel.ExpandRightSide;
         private string title = "主题";
         private string content = "";
 
@@ -128,6 +126,7 @@ namespace JsmMind
 
         private int moveX = -10000;
         private int moveY = -10000;
+          
 
         private bool dragOut = false;
 
@@ -1285,6 +1284,11 @@ namespace JsmMind
             get { return moveX; }
             set { moveX = value; }
         }
+        public int MoveY
+        {
+            get { return moveY; }
+            set { moveY = value; }
+        }
         public bool DragOut
         {
             get { return dragOut; }
@@ -1410,9 +1414,7 @@ namespace JsmMind
     }
 
 
-    #endregion
-       
-
+    #endregion 
 	#region MindDocView
 	/// <summary>
 	/// MindDocView provides a hybrid listview whos first
@@ -1432,56 +1434,26 @@ namespace JsmMind
         public event SubjectEventHandler SubjectClick; 
 		#endregion
 
-		#region Variables 
-		protected int indent = 19;
-		protected int itemheight = 20;
-        protected int itemwidth = 20;
-        protected int taskHeight = 20;
-        protected int lfWidth = 60;
-        protected int ltHeight = 0;
-        protected int colCount = 7; 
-		protected bool showlines = false, showrootlines = false, showplusminus = true;
-
-		protected ListDictionary pmRects;
-        protected ListDictionary nodeRowRects; 
-
-		protected bool alwaysShowPM = false;
-
-		protected Bitmap bmpMinus, bmpPlus;
-            
+		#region Variables  
         private List<SubjectBase> subjectNodes;
          
 		private bool mouseActivate = false;
-
 		private bool allCollapsed = false;
          
-
         //设置选中的节点; 
         private SubjectBase selectedSubject = null;
-
         private SubjectBase activeSubject = null;
         private SubjectBase collapseSubject = null; 
-
         private SubjectBase linkSubject = null;
-
-        private SubjectBase centerProject = null;
-         
+        private SubjectBase centerProject = null;  
         private SubjectBase dragSubject = null;
+
         private int dragStartPx = 0;
         private int dragStartPy = 0;
          
         private int selectPlus = 0;  //1,2,3,4分别表示Lef,Top,Right,Bottom,0表示未选中
-          
-        private Color tempBackColor;
-        private Color tempForeColor;
-
-
-        private bool openLinkSubject = false;
-        private int selectionStartLine = 0;
-        private int selectionEndLine = 0;
-
-        private DateTime currentTime=DateTime.Now; 
-    
+           
+        private bool openLinkSubject = false;  
          
         TextBox txtNode = null;
         Image imgRender = null;
@@ -1497,10 +1469,7 @@ namespace JsmMind
             centerProject = new CenterSubject();
             centerProject.CenterPoint = new Point(this.Width / 2, this.Height / 2);
             subjectNodes.Add(centerProject);
-
-            nodeRowRects = new ListDictionary();
-            pmRects = new ListDictionary();
-             
+              
             txtNode = new TextBox();
             txtNode.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             txtNode.MouseDown += txtNode_MouseDown;
@@ -1513,15 +1482,12 @@ namespace JsmMind
             timerTxt.Interval = 1000;
             timerTxt.Enabled = false;
             timerTxt.Tick += timerTxt_Tick;
-            imgRender = new Bitmap(100, 100);
-            currentTime = DateTime.Now;
+            imgRender = new Bitmap(100, 100); 
+
             // Use reflection to load the
             // embedded bitmaps for the
             // styles plus and minus icons
-            Assembly myAssembly = Assembly.GetAssembly(Type.GetType("JsmMind.MindDocView"));
-            ////string filename = Application.StartupPath + @"\Image\tv_minus.bmp";
-            ////bmpMinus = new Bitmap(filename);  yixun
-            ////bmpMinus = new Bitmap(Application.StartupPath + @"\Image\tv_plus.bmp");
+            Assembly myAssembly = Assembly.GetAssembly(Type.GetType("JsmMind.MindDocView")); 
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MindDocView));
            //// bmpMinus = ((System.Drawing.Bitmap)(resources.GetObject("tv_minus.bmp")));
         }
@@ -1540,17 +1506,6 @@ namespace JsmMind
 		{
 			get { return mouseActivate; }
 			set { mouseActivate = value; }
-		}
-
-		[
-		Category("Behavior"),
-		Description("Specifies wether to always show plus/minus signs next to each node."),
-		DefaultValue(false)
-		]
-		public bool AlwaysShowPlusMinus
-		{
-			get { return alwaysShowPM; }
-			set { alwaysShowPM = value; }
 		} 
 
 		[Browsable(false)]
@@ -1559,72 +1514,16 @@ namespace JsmMind
 			get { return items; }
 		}
 
-		[
-		Category("Behavior"),
-		Description("The indentation of child nodes in pixels."),
-		DefaultValue(19)
-		]
-		public int Indent
-		{
-			get { return indent; }
-			set { indent = value; }
-		} 
-		[
-		Category("Behavior"),
-		Description("Indicates wether lines are shown between sibling nodes and between parent and child nodes."),
-		DefaultValue(false)
-		]
-		public bool ShowLines
-		{
-			get { return showlines; }
-			set { showlines = value; }
-		}
-
-		[
-		Category("Behavior"),
-		Description("Indicates wether lines are shown between root nodes."),
-		DefaultValue(false)
-		]
-		public bool ShowRootLines
-		{
-			get { return showrootlines; }
-			set { showrootlines = value; }
-		}
-
-		[
-		Category("Behavior"),
-		Description("Indicates wether plus/minus signs are shown next to parent nodes."),
-		DefaultValue(true)
-		]
-		public bool ShowPlusMinus
-		{
-			get { return showplusminus; }
-			set { showplusminus = value; }
-		}  
-
-        public int SelectionStartLine
-        {
-            get { return selectionStartLine; }
-            set { selectionStartLine = value; }
-        }
-
-        public int SelectionEndLine
-        {
-            get { return selectionEndLine; }
-            set { selectionEndLine = value; }
-        }
-
-        public Color TempBackColor
-        {
-            get { return tempBackColor; }
-            set { tempBackColor = value; }
-        }
-
-        public Color TempForeColor
-        {
-            get { return tempForeColor; }
-            set { tempForeColor = value; }
-        }  
+        //[
+        //Category("Behavior"),
+        //Description("The indentation of child nodes in pixels."),
+        //DefaultValue(19)
+        //]
+        //public int Indent
+        //{
+        //    get { return indent; }
+        //    set { indent = value; }
+        //}     
 
         public SubjectBase SelectedSubject
         {
@@ -2036,13 +1935,9 @@ namespace JsmMind
         protected override void DrawRows(Graphics g, Rectangle r)
         {
             // render item rows
-            int i;
-            int maxrend = ClientRectangle.Height / itemheight + 1;
-
-
+            int i; 
             AdjustScrollbars();
-            RenderSubject(centerProject, g, r, 0);
-
+            RenderSubject(centerProject, g, r, 0); 
             for (i = 0; i < SubjectBase.FloatSubjects.Count; i++)
             {
                 RenderSubject(SubjectBase.FloatSubjects[i], g, r, 0);

@@ -33,6 +33,12 @@
             this.panel2 = new System.Windows.Forms.Panel();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.panelMap = new System.Windows.Forms.Panel();
+            this.panelBottom = new System.Windows.Forms.Panel();
+            this.btnZoomNormal = new System.Windows.Forms.Button();
+            this.btnZoomIn = new System.Windows.Forms.Button();
+            this.btnZoomOut = new System.Windows.Forms.Button();
+            this.lblZoomValue = new System.Windows.Forms.Label();
+            this.trackBarZoomValue = new System.Windows.Forms.TrackBar();
             this.panel3 = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.panel6 = new System.Windows.Forms.Panel();
@@ -63,12 +69,19 @@
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
             this.toolBtnRelate = new System.Windows.Forms.ToolStripButton();
             this.toolCbZoom = new System.Windows.Forms.ToolStripComboBox();
+            this.toolStripSplitButton1 = new System.Windows.Forms.ToolStripSplitButton();
+            this.toolBtnExpandTwoSide = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolBtnExpandRight = new System.Windows.Forms.ToolStripMenuItem();
+            this.tooBtnTreeMap = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolBtnStructure = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            this.panelBottom.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarZoomValue)).BeginInit();
             this.panel3.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panel6.SuspendLayout();
@@ -106,6 +119,7 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.Controls.Add(this.panelMap);
+            this.splitContainer1.Panel1.Controls.Add(this.panelBottom);
             // 
             // splitContainer1.Panel2
             // 
@@ -119,8 +133,91 @@
             this.panelMap.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelMap.Location = new System.Drawing.Point(0, 0);
             this.panelMap.Name = "panelMap";
-            this.panelMap.Size = new System.Drawing.Size(659, 461);
-            this.panelMap.TabIndex = 0;
+            this.panelMap.Size = new System.Drawing.Size(659, 435);
+            this.panelMap.TabIndex = 2;
+            // 
+            // panelBottom
+            // 
+            this.panelBottom.Controls.Add(this.btnZoomNormal);
+            this.panelBottom.Controls.Add(this.btnZoomIn);
+            this.panelBottom.Controls.Add(this.btnZoomOut);
+            this.panelBottom.Controls.Add(this.lblZoomValue);
+            this.panelBottom.Controls.Add(this.trackBarZoomValue);
+            this.panelBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelBottom.Location = new System.Drawing.Point(0, 435);
+            this.panelBottom.Name = "panelBottom";
+            this.panelBottom.Size = new System.Drawing.Size(659, 26);
+            this.panelBottom.TabIndex = 1;
+            this.panelBottom.SizeChanged += new System.EventHandler(this.panelBottom_SizeChanged);
+            // 
+            // btnZoomNormal
+            // 
+            this.btnZoomNormal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnZoomNormal.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btnZoomNormal.BackgroundImage")));
+            this.btnZoomNormal.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.btnZoomNormal.FlatAppearance.BorderSize = 0;
+            this.btnZoomNormal.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnZoomNormal.Location = new System.Drawing.Point(633, 3);
+            this.btnZoomNormal.Name = "btnZoomNormal";
+            this.btnZoomNormal.Size = new System.Drawing.Size(20, 20);
+            this.btnZoomNormal.TabIndex = 2;
+            this.btnZoomNormal.UseVisualStyleBackColor = true;
+            this.btnZoomNormal.Click += new System.EventHandler(this.btnZoomNormal_Click);
+            // 
+            // btnZoomIn
+            // 
+            this.btnZoomIn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnZoomIn.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btnZoomIn.BackgroundImage")));
+            this.btnZoomIn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.btnZoomIn.FlatAppearance.BorderSize = 0;
+            this.btnZoomIn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnZoomIn.Location = new System.Drawing.Point(473, 3);
+            this.btnZoomIn.Name = "btnZoomIn";
+            this.btnZoomIn.Size = new System.Drawing.Size(20, 20);
+            this.btnZoomIn.TabIndex = 2;
+            this.btnZoomIn.UseVisualStyleBackColor = true;
+            this.btnZoomIn.Click += new System.EventHandler(this.btnZoomIn_Click);
+            // 
+            // btnZoomOut
+            // 
+            this.btnZoomOut.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnZoomOut.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btnZoomOut.BackgroundImage")));
+            this.btnZoomOut.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.btnZoomOut.FlatAppearance.BorderSize = 0;
+            this.btnZoomOut.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnZoomOut.Location = new System.Drawing.Point(607, 3);
+            this.btnZoomOut.Name = "btnZoomOut";
+            this.btnZoomOut.Size = new System.Drawing.Size(20, 20);
+            this.btnZoomOut.TabIndex = 2;
+            this.btnZoomOut.UseVisualStyleBackColor = true;
+            this.btnZoomOut.Click += new System.EventHandler(this.btnZoomOut_Click);
+            // 
+            // lblZoomValue
+            // 
+            this.lblZoomValue.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblZoomValue.AutoSize = true;
+            this.lblZoomValue.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.lblZoomValue.Location = new System.Drawing.Point(424, 5);
+            this.lblZoomValue.Name = "lblZoomValue";
+            this.lblZoomValue.Size = new System.Drawing.Size(40, 17);
+            this.lblZoomValue.TabIndex = 1;
+            this.lblZoomValue.Text = "100%";
+            // 
+            // trackBarZoomValue
+            // 
+            this.trackBarZoomValue.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.trackBarZoomValue.AutoSize = false;
+            this.trackBarZoomValue.LargeChange = 50;
+            this.trackBarZoomValue.Location = new System.Drawing.Point(498, 4);
+            this.trackBarZoomValue.Maximum = 400;
+            this.trackBarZoomValue.Minimum = 50;
+            this.trackBarZoomValue.Name = "trackBarZoomValue";
+            this.trackBarZoomValue.Size = new System.Drawing.Size(104, 21);
+            this.trackBarZoomValue.SmallChange = 50;
+            this.trackBarZoomValue.TabIndex = 0;
+            this.trackBarZoomValue.TickStyle = System.Windows.Forms.TickStyle.None;
+            this.trackBarZoomValue.Value = 100;
+            this.trackBarZoomValue.ValueChanged += new System.EventHandler(this.trackBarZoomValue_ValueChanged);
             // 
             // panel3
             // 
@@ -330,7 +427,8 @@
             this.toolBtnRemark,
             this.toolStripSeparator6,
             this.toolBtnRelate,
-            this.toolCbZoom});
+            this.toolCbZoom,
+            this.toolStripSplitButton1});
             this.toolStrip2.Location = new System.Drawing.Point(0, 0);
             this.toolStrip2.Name = "toolStrip2";
             this.toolStrip2.Size = new System.Drawing.Size(927, 25);
@@ -403,6 +501,47 @@
             this.toolCbZoom.Text = "1.0";
             this.toolCbZoom.TextChanged += new System.EventHandler(this.toolCbZoom_TextChanged);
             // 
+            // toolStripSplitButton1
+            // 
+            this.toolStripSplitButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolBtnExpandTwoSide,
+            this.toolBtnExpandRight,
+            this.tooBtnTreeMap,
+            this.toolBtnStructure});
+            this.toolStripSplitButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripSplitButton1.Image")));
+            this.toolStripSplitButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripSplitButton1.Name = "toolStripSplitButton1";
+            this.toolStripSplitButton1.Size = new System.Drawing.Size(88, 22);
+            this.toolStripSplitButton1.Text = "布局类型";
+            // 
+            // toolBtnExpandTwoSide
+            // 
+            this.toolBtnExpandTwoSide.Name = "toolBtnExpandTwoSide";
+            this.toolBtnExpandTwoSide.Size = new System.Drawing.Size(152, 22);
+            this.toolBtnExpandTwoSide.Text = "扩展导图";
+            this.toolBtnExpandTwoSide.Click += new System.EventHandler(this.toolBtnExpandTwoSide_Click);
+            // 
+            // toolBtnExpandRight
+            // 
+            this.toolBtnExpandRight.Name = "toolBtnExpandRight";
+            this.toolBtnExpandRight.Size = new System.Drawing.Size(152, 22);
+            this.toolBtnExpandRight.Text = "向右导图";
+            this.toolBtnExpandRight.Click += new System.EventHandler(this.toolBtnExpandRight_Click);
+            // 
+            // tooBtnTreeMap
+            // 
+            this.tooBtnTreeMap.Name = "tooBtnTreeMap";
+            this.tooBtnTreeMap.Size = new System.Drawing.Size(152, 22);
+            this.tooBtnTreeMap.Text = "树状导图";
+            this.tooBtnTreeMap.Click += new System.EventHandler(this.tooBtnTreeMap_Click);
+            // 
+            // toolBtnStructure
+            // 
+            this.toolBtnStructure.Name = "toolBtnStructure";
+            this.toolBtnStructure.Size = new System.Drawing.Size(152, 22);
+            this.toolBtnStructure.Text = "组织结构图";
+            this.toolBtnStructure.Click += new System.EventHandler(this.toolBtnStructure_Click);
+            // 
             // UcMindMap
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -417,6 +556,9 @@
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.panelBottom.ResumeLayout(false);
+            this.panelBottom.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarZoomValue)).EndInit();
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
             this.groupBox1.ResumeLayout(false);
@@ -437,7 +579,6 @@
 
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.Panel panelMap;
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton toolStripButton1;
@@ -469,5 +610,17 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
         private System.Windows.Forms.ToolStripButton toolBtnRelate;
         private System.Windows.Forms.ToolStripComboBox toolCbZoom;
+        private System.Windows.Forms.Panel panelMap;
+        private System.Windows.Forms.Panel panelBottom;
+        private System.Windows.Forms.Button btnZoomNormal;
+        private System.Windows.Forms.Button btnZoomIn;
+        private System.Windows.Forms.Button btnZoomOut;
+        private System.Windows.Forms.Label lblZoomValue;
+        private System.Windows.Forms.TrackBar trackBarZoomValue;
+        private System.Windows.Forms.ToolStripSplitButton toolStripSplitButton1;
+        private System.Windows.Forms.ToolStripMenuItem toolBtnExpandTwoSide;
+        private System.Windows.Forms.ToolStripMenuItem toolBtnExpandRight;
+        private System.Windows.Forms.ToolStripMenuItem tooBtnTreeMap;
+        private System.Windows.Forms.ToolStripMenuItem toolBtnStructure;
     }
 }

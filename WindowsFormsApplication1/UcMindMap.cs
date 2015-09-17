@@ -77,10 +77,73 @@ namespace WindowsFormsApplication1
             this.mindMap.RelateSubjectLink();
         }
 
+
+        private void toolBtnExpandTwoSide_Click(object sender, EventArgs e)
+        {
+            this.mindMap.ViewModel = MapViewModel.ExpandTwoSides;
+        }
+
+        private void toolBtnExpandRight_Click(object sender, EventArgs e)
+        {
+            this.mindMap.ViewModel = MapViewModel.ExpandRightSide;
+        }
+
+        private void tooBtnTreeMap_Click(object sender, EventArgs e)
+        {
+            this.mindMap.ViewModel = MapViewModel.TreeMap;
+        }
+
+        private void toolBtnStructure_Click(object sender, EventArgs e)
+        {
+            this.mindMap.ViewModel = MapViewModel.Structure;
+        }
+
+
         private void toolCbZoom_TextChanged(object sender, EventArgs e)
         {
             this.mindMap.ZoomMap(float.Parse(this.toolCbZoom.Text));
         }
+
+        private void panelBottom_SizeChanged(object sender, EventArgs e)
+        {
+            this.panelBottom.Height = 26;
+        }
+
+        private void btnZoomIn_Click(object sender, EventArgs e)
+        {
+            int value = this.trackBarZoomValue.Value - 50;
+            if(value > this.trackBarZoomValue.Minimum)
+            { 
+                this.trackBarZoomValue.Value = value;
+            }
+        }
+
+        private void btnZoomOut_Click(object sender, EventArgs e)
+        {
+            int value = this.trackBarZoomValue.Value + 50;
+            if (value <this.trackBarZoomValue.Maximum)
+            { 
+                this.trackBarZoomValue.Value = value;
+            }
+        }
+
+        private void btnZoomNormal_Click(object sender, EventArgs e)
+        {
+            this.trackBarZoomValue.Value = 100;
+        }
+         
+        private void trackBarZoomValue_ValueChanged(object sender, EventArgs e)
+        {
+            this.lblZoomValue.Text = this.trackBarZoomValue.Value + "%";
+            float zoom = this.trackBarZoomValue.Value * 1.0f / 100;
+
+
+            this.mindMap.ZoomMap(zoom);
+
+        }
+
+
+         
          
 
     }
