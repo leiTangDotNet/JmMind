@@ -118,17 +118,6 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="btnZoomNormal.BackgroundImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
-        JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABAklEQVQ4T6XTsVEDQQyFYSoANwAZkJMw
-        bgCKxUVgR1CBCWGGBijANu9j7jHHwQWMg39OKz1Ju7rdk5vb5Tbsw274HgbW4WyAXf9Yu1XAosGP8Bre
-        wyqcDrD5xGiq300LvIS7cB4WQRxsPjGaHwVsRdUGHsNlaHLhE2sjOXsBDlu7DxVswnVoMpuvDWjlHFrg
-        LVwEXSr0tf7LRyvnqwCnIZn2tNvTQJO7K1o5GwsDMml2uQrPQSLYfGONnAXj6AIuyUP47xHkrC0E54ao
-        K8a+X0MUOOo39iJ5ExVMzwu+NqD9vkhzV7kzAXv2Ks89JkMyabBnH1Ofc2nQmXVGz4+Rdrn9BKyROTpY
-        kZZNAAAAAElFTkSuQmCC
-</value>
-  </data>
   <data name="btnZoomIn.BackgroundImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
@@ -151,6 +140,12 @@
         ltD2vIB5sM4hEzYLp+DNA4dD02Bs8ftaZ0tlti3nFfw9O6WUfgDxXCR16pZAwAAAAABJRU5ErkJggg==
 </value>
   </data>
+  <metadata name="toolStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>16, 5</value>
+  </metadata>
+  <metadata name="toolStrip2.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>112, 4</value>
+  </metadata>
   <metadata name="toolStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>16, 5</value>
   </metadata>
@@ -251,9 +246,6 @@
         jw7P8ehwtoF3UKtSk81dm2wAAAAASUVORK5CYII=
 </value>
   </data>
-  <metadata name="toolStrip2.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>112, 4</value>
-  </metadata>
   <data name="toolBtnAddImage.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8

@@ -24,7 +24,7 @@ namespace WindowsFormsApplication1
 
             this.richTextBox1.TextChanged += richTextBox1_TextChanged;
 
-            this.splitContainer1.Panel2Collapsed = true;
+            this.splitContainer1.Panel2Collapsed = true; 
 
         }
 
@@ -97,54 +97,34 @@ namespace WindowsFormsApplication1
         {
             this.mindMap.ViewModel = MapViewModel.Structure;
         }
-
-
-        private void toolCbZoom_TextChanged(object sender, EventArgs e)
-        {
-            this.mindMap.ZoomMap(float.Parse(this.toolCbZoom.Text));
-        }
-
+         
         private void panelBottom_SizeChanged(object sender, EventArgs e)
         {
             this.panelBottom.Height = 26;
         }
 
         private void btnZoomIn_Click(object sender, EventArgs e)
-        {
-            int value = this.trackBarZoomValue.Value - 50;
-            if(value > this.trackBarZoomValue.Minimum)
-            { 
-                this.trackBarZoomValue.Value = value;
+        { 
+            if(cbZoomValue.SelectedIndex>0)
+            {
+                cbZoomValue.SelectedIndex = cbZoomValue.SelectedIndex - 1;
             }
         }
 
         private void btnZoomOut_Click(object sender, EventArgs e)
-        {
-            int value = this.trackBarZoomValue.Value + 50;
-            if (value <this.trackBarZoomValue.Maximum)
-            { 
-                this.trackBarZoomValue.Value = value;
+        {  
+            if(cbZoomValue.SelectedIndex< cbZoomValue.Items.Count-1)
+            {
+                cbZoomValue.SelectedIndex = cbZoomValue.SelectedIndex + 1;
             }
-        }
+        } 
 
-        private void btnZoomNormal_Click(object sender, EventArgs e)
+        private void cbZoomValue_SelectedIndexChanged(object sender, EventArgs e)
         {
-            this.trackBarZoomValue.Value = 100;
-        }
-         
-        private void trackBarZoomValue_ValueChanged(object sender, EventArgs e)
-        {
-            this.lblZoomValue.Text = this.trackBarZoomValue.Value + "%";
-            float zoom = this.trackBarZoomValue.Value * 1.0f / 100;
-
-
+            float zoom = Convert.ToInt32(cbZoomValue.Text.Substring(0, cbZoomValue.Text.Length - 1)) / 100.0f;
             this.mindMap.ZoomMap(zoom);
 
-        }
-
-
-         
-         
+        }  
 
     }
 }

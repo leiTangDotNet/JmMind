@@ -691,6 +691,18 @@ namespace JsmMind
             } 
         }
 
+        public void ResortChildSubject()
+        {
+            this.moveX = -10000;
+            this.moveY = -10000;
+            for (int i = 0; i < this.ChildSubjects.Count; i++)
+            {
+                SubjectBase childSubject = this.ChildSubjects[i];
+                childSubject.ResortChildSubject();
+                childSubject.AdjustPosition();
+            }
+            this.AdjustPosition();
+        }
 
         /// <summary>
         /// 插入主题
@@ -806,7 +818,17 @@ namespace JsmMind
             {
                 topSubject.AdjustPosition();
             }
-        } 
+        }
+
+        public virtual int[] GetPlusVisible()
+        {
+            int[] plus = new int[4];
+            plus[0] = 1;
+            plus[1] = 1;
+            plus[2] = 1;
+            plus[3] = 1;
+            return plus;
+        }
 
         /// <summary>
         /// 获取主题显示总高度（所有子主题）
@@ -1063,8 +1085,7 @@ namespace JsmMind
             {
                 childSubject.SetTitleStyle();
             }
-        }
-         
+        } 
 
         /// <summary>
         /// 获取顶层主题
@@ -1320,6 +1341,34 @@ namespace JsmMind
             this.BranchSplitHeight=24;
 
             this.level = 0; 
+        }
+
+        public override int[] GetPlusVisible()
+        {
+            int[] plus = new int[4];
+
+            plus[0] = 0;
+            plus[1] = 0;
+            plus[2] = 0;
+            plus[3] = 0;
+            if(viewMode== MapViewModel.ExpandTwoSides)
+            {
+                plus[0] = 1;
+                plus[2] = 1; 
+            } 
+            else if(viewMode== MapViewModel.ExpandRightSide)
+            {
+                plus[2] = 1;
+            }
+            else if(viewMode== MapViewModel.Structure)
+            {
+                plus[3] = 1;
+            }
+            else if(viewMode== MapViewModel.TreeMap)
+            {
+                plus[3] = 1;
+            }
+            return plus;
         } 
     }
     /// <summary>
@@ -1331,16 +1380,59 @@ namespace JsmMind
         /// <summary>
         /// 初始化主题
         /// </summary>
-        /// <param name="fatherSubject">上层主题</param>
-        /// <param name="direction">方向，-1表示向左，1表示向右</param>
-        public TitleSubject(SubjectBase fatherSubject,int direction)
+        /// <param name="subject">点击主题</param>
+        /// <param name="plus">点击方向(1,2,3,4分别表示左，上，右，下)</param>
+        public TitleSubject(SubjectBase subject, int plus)
         {
-            if(fatherSubject.GetType()== typeof(CenterSubject))
+            if (subject.GetType() == typeof(CenterSubject))
             {
-                this.Direction = direction; 
+                if (viewMode == MapViewModel.ExpandTwoSides)
+                {
+                    this.Direction = plus == 1 ? -1 : 1;
+                }
+                this.ParentSubject = subject;
             }
-            this.ParentSubject = fatherSubject; 
+            else if (subject.GetType() == typeof(TitleSubject))
+            {
+                //是否子主题
+                bool bAddChild = true;
+                int insertPos = 0; //插入位置
+
+                if (viewMode == MapViewModel.Structure)   
+                {
+                    bAddChild = plus == 2 || plus == 4; //上下添加子主题
+                    insertPos = plus == 1 ? 0 : 1;    
+                }
+                else
+                {
+                    bAddChild = plus == 1 || plus == 3; //左右添加子主题
+                    insertPos = plus == 2 ? 0 : 1;
+
+                }
+
+                if (bAddChild)  //子主题
+                {
+                    this.ParentSubject = subject;  
+                }
+                else  //兄弟主题
+                {
+                    SubjectBase brotherSubject = subject;
+                    SubjectBase fatherSubject = brotherSubject.ParentSubject;
+                    if (fatherSubject == null)
+                    {
+                        return;
+                    }
+                    if (fatherSubject.GetType() == typeof(CenterSubject))
+                    {
+                        this.Direction = brotherSubject.Direction;
+                    }
+
+                    int index = fatherSubject.ChildSubjects.IndexOf(brotherSubject);
+                    fatherSubject.InsertSubject(this, index + insertPos);
+                }
+            }
         }
+         
         /// <summary>
         /// 初始化主题
         /// </summary>
@@ -1348,18 +1440,7 @@ namespace JsmMind
         /// <param name="insertUp">是否向上插入</param>
         public TitleSubject(SubjectBase brotherSubject,bool insertUp)
         { 
-            SubjectBase fatherSubject = brotherSubject.ParentSubject;
-            if (fatherSubject == null)
-            {
-                return;
-            }
-            if (fatherSubject.GetType() == typeof(CenterSubject))
-            {
-                this.Direction = brotherSubject.Direction;
-            }
-
-            int index = fatherSubject.ChildSubjects.IndexOf(brotherSubject);
-            fatherSubject.InsertSubject(this, index + (insertUp ? 0 : 1));
+           
         }   
     }
 
@@ -1436,7 +1517,7 @@ namespace JsmMind
 
 		#region Variables  
         private List<SubjectBase> subjectNodes;
-         
+        
 		private bool mouseActivate = false;
 		private bool allCollapsed = false;
          
@@ -1533,7 +1614,12 @@ namespace JsmMind
         public MapViewModel ViewModel
         {
             get { return SubjectBase.viewMode; }
-            set { SubjectBase.viewMode = value; }
+            set
+            {
+                SubjectBase.viewMode = value;
+
+                centerProject.ResortChildSubject();
+            }
         }
 		#endregion
 
@@ -1622,22 +1708,8 @@ namespace JsmMind
                         int plus = PlusInArea(e, selectedSubject);
                         if (plus > 0) 
                         {
-                            SubjectBase subject = null;
-                            switch (plus)
-                            {
-                                case 1:
-                                    subject = new TitleSubject(selectedSubject, -1);
-                                    break;
-                                case 2:
-                                    subject = new TitleSubject(selectedSubject,true);
-                                    break;
-                                case 3:
-                                    subject = new TitleSubject(selectedSubject,1);
-                                    break;
-                                case 4:
-                                    subject = new TitleSubject(selectedSubject,false);
-                                    break;
-                            }
+                            SubjectBase subject = null; 
+                            subject = new TitleSubject(selectedSubject, plus);
                             if (subject != null)
                             {
                                 subjectNodes.Add(subject);
@@ -2569,39 +2641,44 @@ namespace JsmMind
             g.Clip = new Region(sr);
 
             Pen penPlus = new Pen(new SolidBrush(Color.White), 2.0f);
+            int[] plus = subject.GetPlusVisible();
 
-            //绘制左边Plus
-            Rectangle pmLeft = new Rectangle(area.Left - (int)(8 * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
-            subject.RectPlusLeft = new Rectangle(pmLeft.Left,pmLeft.Top,pmLeft.Width/2,pmLeft.Height);
-            g.Clip = new Region(subject.RectPlusLeft);  //防止超出边界  
-            RenderPlusLeft(g, pmLeft, penPlus, selectPlus == 1 ? Color.LightSteelBlue : Color.SteelBlue);
-
-            //绘制右边边Plus
-            Rectangle pmRight = new Rectangle(area.Left + area.Width - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
-            subject.RectPlusRight = new Rectangle(pmRight.Left + pmRight.Width / 2, pmRight.Top, pmRight.Width / 2, pmRight.Height);
-            g.Clip = new Region(subject.RectPlusRight);  //防止超出边界           
-            RenderPlusRight(g, pmRight, penPlus, selectPlus == 3 ? Color.LightSteelBlue : Color.SteelBlue);
-
-
-            //绘制上边Plus
-            if (subject.GetType() == typeof(TitleSubject))
+            if(plus[0]==1)
             {
+                //绘制左边Plus
+                Rectangle pmLeft = new Rectangle(area.Left - (int)(8 * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
+                subject.RectPlusLeft = new Rectangle(pmLeft.Left, pmLeft.Top, pmLeft.Width / 2, pmLeft.Height);
+                g.Clip = new Region(subject.RectPlusLeft);  //防止超出边界  
+                RenderPlusLeft(g, pmLeft, penPlus, selectPlus == 1 ? Color.LightSteelBlue : Color.SteelBlue); 
+            }
+            if(plus[2]==1)
+            {
+                //绘制右边边Plus
+                Rectangle pmRight = new Rectangle(area.Left + area.Width - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
+                subject.RectPlusRight = new Rectangle(pmRight.Left + pmRight.Width / 2, pmRight.Top, pmRight.Width / 2, pmRight.Height);
+                g.Clip = new Region(subject.RectPlusRight);  //防止超出边界           
+                RenderPlusRight(g, pmRight, penPlus, selectPlus == 3 ? Color.LightSteelBlue : Color.SteelBlue); 
+            }
+            if(plus[1]==1)
+            {
+                //绘制上边Plus
+
                 Rectangle pmTop = new Rectangle(area.Left + area.Width / 2 - (int)(10 * SubjectBase.zoomValue), area.Top - (int)(8 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue));
                 subject.RectPlusTop = new Rectangle(pmTop.Left, pmTop.Top, pmTop.Width, pmTop.Height / 2);
 
                 g.Clip = new Region(subject.RectPlusTop);  //防止超出边界
                 RenderPlusTop(g, pmTop, penPlus, selectPlus == 2 ? Color.LightSteelBlue : Color.SteelBlue);
             }
-
-            //绘制下边Plus
-            if (subject.GetType() == typeof(TitleSubject))
+            if(plus[3]==1)
             {
+                //绘制下边Plus
                 Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - (int)(10 * SubjectBase.zoomValue), area.Top + area.Height - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue));
                 subject.RectPlusBottom = new Rectangle(pmBottom.Left, pmBottom.Top + pmBottom.Height / 2, pmBottom.Width, pmBottom.Height / 2);
 
                 g.Clip = new Region(subject.RectPlusBottom);  //防止超出边界
                 RenderPlusBottom(g, pmBottom, penPlus, selectPlus == 4 ? Color.LightSteelBlue : Color.SteelBlue);
-            }
+            }      
+
             g.Clip = new Region(sr);
 
         }
@@ -2675,8 +2752,18 @@ namespace JsmMind
             }
         }
         private GraphicsPath CreateRoundedRectanglePath(Rectangle rect, int cornerRadius)
-        {
+        { 
             GraphicsPath roundedRect = new GraphicsPath();
+
+            if (cornerRadius < 2)
+            {
+                roundedRect.AddLine(rect.X, rect.Y, rect.Right, rect.Y);
+                roundedRect.AddLine(rect.X, rect.Y, rect.X, rect.Bottom);
+                roundedRect.AddLine(rect.X, rect.Bottom, rect.Right, rect.Bottom);
+                roundedRect.AddLine(rect.Right, rect.Bottom, rect.Right, rect.Y);
+
+                return roundedRect;
+            }
             roundedRect.AddArc(rect.X, rect.Y, cornerRadius * 2, cornerRadius * 2, 180, 90);
             roundedRect.AddLine(rect.X + cornerRadius, rect.Y, rect.Right - cornerRadius * 2, rect.Y);
             roundedRect.AddArc(rect.X + rect.Width - cornerRadius * 2, rect.Y, cornerRadius * 2, cornerRadius * 2, 270, 90);
