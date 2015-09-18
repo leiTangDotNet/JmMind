@@ -25,9 +25,11 @@ namespace JsmMind
 {
     #region Enumerations
     public enum MapViewModel { ExpandTwoSides, ExpandRightSide, TreeMap, Structure };
-	#endregion 
-	#region Event Stuff
-	#endregion 
+    public enum MapLinkStyle { RectLine, RoundLine, Curve, Cycle, Angle };
+    public enum MapTheme { Default, Classics, Bubble, Lemo, Black };
+    #endregion
+    #region Event Stuff
+    #endregion
     #region SubjectPicture
     [Serializable]
     public class SubjectPicture
@@ -70,6 +72,7 @@ namespace JsmMind
         public static float zoomValue = 1;
         static public List<SubjectBase> FloatSubjects = new List<SubjectBase>();
         static public MapViewModel viewMode = MapViewModel.ExpandRightSide;
+        static public MindDocTheme mindDocThem = new MindDocThemeDefault();
         private string title = "主题";
         private string content = "";
 
@@ -84,6 +87,7 @@ namespace JsmMind
         private Color borderColor = Color.Green;
         private Color selectColor = Color.SteelBlue;
         private Color activeColor = Color.LightSteelBlue;
+        private MapLinkStyle lineStyle = MapLinkStyle.RoundLine;
 
         private float zoom = 1;
 
@@ -95,6 +99,8 @@ namespace JsmMind
         protected int branchLinkWidth = 30;
         protected int branchSplitHeight = 12;
         protected int imageSplitWidth = 5;
+        protected bool equalWidth = false;
+
         protected int collapseRadius = 6;
 
 
@@ -104,18 +110,19 @@ namespace JsmMind
         protected bool visible = true;
         private Rectangle rectAreas;
         private Rectangle rectTitle;
-         
+
         private Rectangle rectCollapse;
 
-        private Rectangle rectPlusLeft; 
-        private Rectangle rectPlusTop; 
-        private Rectangle rectPlusRight; 
+        private Rectangle rectPlusLeft;
+        private Rectangle rectPlusTop;
+        private Rectangle rectPlusRight;
         private Rectangle rectPlusBottom;
 
 
         protected SubjectBase parentSubject = null;
         protected SubjectBase relateSubject = null;
         private SubjectBase linkSubject = null;
+
 
 
 
@@ -126,13 +133,13 @@ namespace JsmMind
 
         private int moveX = -10000;
         private int moveY = -10000;
-          
+
 
         private bool dragOut = false;
 
         protected int scalceWidth = 0;
 
-         
+
         public SubjectBase DeepClone()
         {
             System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
@@ -153,8 +160,8 @@ namespace JsmMind
         /// </summary>
         public virtual void AdjustPosition()
         {
-            if(viewMode== MapViewModel.ExpandTwoSides)
-            { 
+            if (viewMode == MapViewModel.ExpandTwoSides)
+            {
                 if (this.GetType() == typeof(CenterSubject))
                 {
                     List<SubjectBase> lstLeftSubjecs = new List<SubjectBase>();
@@ -173,33 +180,33 @@ namespace JsmMind
                     }
 
                     if (lstLeftSubjecs.Count > 0)
-                        AdjustExpandTowSides(lstLeftSubjecs,-1);
+                        AdjustExpandTowSides(lstLeftSubjecs, -1);
                     if (lstRightSubjecs.Count > 0)
-                        AdjustExpandTowSides(lstRightSubjecs,1); 
+                        AdjustExpandTowSides(lstRightSubjecs, 1);
                 }
                 else
-                { 
+                {
                     AdjustExpandTowSides();
                 }
 
 
             }
-            else if(viewMode== MapViewModel.ExpandRightSide)
+            else if (viewMode == MapViewModel.ExpandRightSide)
             {
                 AdjustExpandRightSide();
             }
-            else if(viewMode == MapViewModel.TreeMap)
+            else if (viewMode == MapViewModel.TreeMap)
             {
                 AdjustTreeMap();
             }
-            else if(viewMode== MapViewModel.Structure)
+            else if (viewMode == MapViewModel.Structure)
             {
                 AdjustStructure();
             }
         }
-        private void AdjustExpandTowSides(List<SubjectBase> lstSubjecs=null,int side=0)
-        {  
-            if(lstSubjecs==null)
+        private void AdjustExpandTowSides(List<SubjectBase> lstSubjecs = null, int side = 0)
+        {
+            if (lstSubjecs == null)
             {
                 lstSubjecs = this.ChildSubjects;
             }
@@ -296,7 +303,7 @@ namespace JsmMind
                     }
                 }
                 int y = top + hs / 2;
-                 
+
                 childSubject.CenterPoint = new Point(x, y);
 
                 top = top + hs + hb;
@@ -369,7 +376,7 @@ namespace JsmMind
 
             int top = 0;
             if (this.level == 0)
-            { 
+            {
                 int totalWidth = 0;
                 int ws = 0;
                 for (int i = 0; i < count; i++)
@@ -383,7 +390,7 @@ namespace JsmMind
 
 
                 int left = this.CenterPoint.X - totalWidth / 2;
-                if (left < this.Width / 2) 
+                if (left < this.Width / 2)
                 {
                     left = this.Width / 2;
                 }
@@ -392,7 +399,7 @@ namespace JsmMind
                 {
                     SubjectBase childSubject = this.ChildSubjects[i];
                     ws = childSubject.GetTotalWidth();
-                    int y = childSubject.centerPoint.Y + childSubject.moveY; 
+                    int y = childSubject.centerPoint.Y + childSubject.moveY;
                     if (childSubject.moveY == -10000)
                     {
                         y = this.CenterPoint.Y + (this.Height / 2) + this.BranchLinkWidth + childSubject.height / 2 + childSubject.leftBuffer;
@@ -428,21 +435,21 @@ namespace JsmMind
                     int x = childSubject.centerPoint.X + childSubject.moveX;
                     //if (childSubject.moveX == -10000)
                     //{
-                        if (this.level == 0)
-                        {
-                            x = this.CenterPoint.X + (this.Width / 2) + this.BranchLinkWidth + childSubject.width / 2 + childSubject.leftBuffer;
-                        }
-                        else
-                        {
-                            x = this.CenterPoint.X - (this.Width / 2) + this.BranchLinkWidth / 2 + childSubject.Width / 2 + childSubject.leftBuffer;
-                        }
-                        if (childSubject.relateSubject != null) //和关联节点同一位置
-                        {
-                            x = childSubject.relateSubject.centerPoint.X + childSubject.width / 2;
-                        }
+                    if (this.level == 0)
+                    {
+                        x = this.CenterPoint.X + (this.Width / 2) + this.BranchLinkWidth + childSubject.width / 2 + childSubject.leftBuffer;
+                    }
+                    else
+                    {
+                        x = this.CenterPoint.X - (this.Width / 2) + this.BranchLinkWidth / 2 + childSubject.Width / 2 + childSubject.leftBuffer;
+                    }
+                    if (childSubject.relateSubject != null) //和关联节点同一位置
+                    {
+                        x = childSubject.relateSubject.centerPoint.X + childSubject.width / 2;
+                    }
                     //} 
 
-                   
+
 
 
                     int y = top + childSubject.height / 2;
@@ -464,43 +471,43 @@ namespace JsmMind
                     childSubject.AdjustPosition();
                 }
 
-            } 
+            }
         }
-         
+
         /// <summary>
         /// 调整主题大小
         /// </summary>
-        public void AdjustSubjectSize(bool bAdjustPosition=true)
+        public void AdjustSubjectSize(bool bAdjustPosition = true)
         {
-            Image bmp=new Bitmap(200,200);
+            Image bmp = new Bitmap(200, 200);
             Graphics g = Graphics.FromImage(bmp);
 
             int w = 0;
             int h = 0;
-            foreach(SubjectPicture subjectPicture in subjectPictures)
+            foreach (SubjectPicture subjectPicture in subjectPictures)
             {
                 w += subjectPicture.SubjectImage.Width;
                 w += this.imageSplitWidth;
 
-                if(subjectPicture.SubjectImage.Height>h)
+                if (subjectPicture.SubjectImage.Height > h)
                 {
                     h = subjectPicture.SubjectImage.Height;
                 }
             }
             //绘制文本
-            SizeF size = g.MeasureString(this.title,this.font);
+            SizeF size = g.MeasureString(this.title, this.font);
             w += (int)size.Width;
-            if(size.Height>h)
+            if (size.Height > h)
             {
                 h = (int)size.Height;
             }
-            int dx = this.direction*(this.marginWidth + w + this.marginWidth - this.width)/2;
-            int dy = (this.marginHeight + h + this.marginHeight - this.height)/2;
+            int dx = this.direction * (this.marginWidth + w + this.marginWidth - this.width) / 2;
+            int dy = (this.marginHeight + h + this.marginHeight - this.height) / 2;
             this.width = this.marginWidth + w + this.marginWidth;
-            this.height = this.marginHeight + h + this.marginHeight;
+            this.height = this.equalWidth ? this.width : this.marginHeight + h + this.marginHeight;
 
             if (bAdjustPosition)
-            { 
+            {
                 this.moveX = dx;
                 this.scalceWidth = dx;  //增加宽度
                 if (this.parentSubject != null)
@@ -513,7 +520,7 @@ namespace JsmMind
                     topSubject.AdjustPosition();
                 }
             }
-        } 
+        }
 
         /// <summary>
         /// 移动主题位置
@@ -531,8 +538,8 @@ namespace JsmMind
                 SubjectBase topSubject = this.GetTopSubect();
                 this.ParentSubject = null;
                 FloatSubjects.Add(this);
-                this.SetTitleStyle(); 
-                 
+                this.SetTitleStyle();
+
                 this.CenterPoint = new Point(movePoint.X, movePoint.Y);
 
                 foreach (SubjectBase childSub in this.childSubjects)
@@ -548,7 +555,7 @@ namespace JsmMind
                 {
                     parentSubject.AdjustPosition();
                     parentSubject = parentSubject.ParentSubject;
-                }  
+                }
 
                 this.DragOut = false;
                 return;
@@ -598,12 +605,12 @@ namespace JsmMind
                                 }
                             }
                         }
-                    }   
+                    }
 
                 }
                 else
                 {
-                    if(this.direction==1)
+                    if (this.direction == 1)
                     {
                         int x = this.parentSubject.CenterPoint.X + (this.parentSubject.Width / 2) + this.parentSubject.BranchLinkWidth + this.width / 2 + this.leftBuffer;
                         if (x > movePoint.X)
@@ -611,15 +618,15 @@ namespace JsmMind
                             movePoint.X = x;
                         }
                     }
-                    else if(direction==-1)
+                    else if (direction == -1)
                     {
                         int x = this.parentSubject.CenterPoint.X - (this.parentSubject.Width / 2) - this.parentSubject.BranchLinkWidth - this.width / 2 - this.leftBuffer;
                         if (x < movePoint.X)
                         {
                             movePoint.X = x;
-                        } 
+                        }
                     }
-                    
+
 
                     bool bUp = movePoint.Y < this.centerPoint.Y;
                     for (int i = 0; i < this.parentSubject.childSubjects.Count; i++)
@@ -673,22 +680,22 @@ namespace JsmMind
             }
             dX = movePoint.X - this.centerPoint.X;
             dY = movePoint.Y - this.centerPoint.Y;
-            this.CenterPoint = new Point(movePoint.X, movePoint.Y); 
+            this.CenterPoint = new Point(movePoint.X, movePoint.Y);
 
-            foreach(SubjectBase childSub in this.childSubjects)
+            foreach (SubjectBase childSub in this.childSubjects)
             {
                 childSub.moveX = dX;
                 childSub.moveY = dY;
-            } 
+            }
             this.moveX = 0;
             this.moveY = 0;
             this.AdjustPosition();
-              
+
             while (parentSubject != null)
             {
                 parentSubject.AdjustPosition();
                 parentSubject = parentSubject.ParentSubject;
-            } 
+            }
         }
 
         public void ResortChildSubject()
@@ -701,6 +708,8 @@ namespace JsmMind
                 childSubject.ResortChildSubject();
                 childSubject.AdjustPosition();
             }
+            mindDocThem.SetThemeStyle(this);
+            this.AdjustSubjectSize(false);
             this.AdjustPosition();
         }
 
@@ -708,20 +717,20 @@ namespace JsmMind
         /// 插入主题
         /// </summary>
         /// <param name="subject"></param>
-        public void InsertSubject(SubjectBase subject,int position)
-        { 
-            subject.parentSubject = this; 
+        public void InsertSubject(SubjectBase subject, int position)
+        {
+            subject.parentSubject = this;
             subject.SetTitleStyle();
 
             if (!this.childSubjects.Contains(subject))
             {
-                if(this.expanded==false)
+                if (this.expanded == false)
                 {
                     this.expanded = true;
                 }
-                if (this.childSubjects.Count == 0 || position >= this.childSubjects.Count || position<0)
+                if (this.childSubjects.Count == 0 || position >= this.childSubjects.Count || position < 0)
                 {
-                    this.childSubjects.Add(subject); 
+                    this.childSubjects.Add(subject);
                 }
                 else
                 {
@@ -730,7 +739,7 @@ namespace JsmMind
                 this.AdjustPosition();
 
                 SubjectBase parentSubject = this.ParentSubject;
-                while(parentSubject!=null)
+                while (parentSubject != null)
                 {
                     parentSubject.AdjustPosition();
                     parentSubject = parentSubject.ParentSubject;
@@ -741,8 +750,8 @@ namespace JsmMind
                 //{
                 //    topSubject.AdjustPosition();
                 //} 
-            }  
-        } 
+            }
+        }
 
         /// <summary>
         /// 移除主题
@@ -760,16 +769,16 @@ namespace JsmMind
                 {
                     parentSubject.AdjustPosition();
                     parentSubject = parentSubject.ParentSubject;
-                } 
+                }
 
                 //SubjectBase topSubject = this.GetTopSubect();
                 //if (topSubject != null)
                 //{
                 //    topSubject.AdjustPosition();
                 //}
-            } 
+            }
         }
-    
+
         /// <summary>
         /// 增加图片
         /// </summary>
@@ -796,8 +805,8 @@ namespace JsmMind
             this.branchLinkWidth = (int)(this.branchLinkWidth / this.zoom * zoomValue);
             this.branchSplitHeight = (int)(this.branchSplitHeight / this.zoom * zoomValue);
             this.imageSplitWidth = (int)(this.imageSplitWidth / this.zoom * zoomValue);
-            this.leftBuffer = (int)(this.leftBuffer / this.zoom * zoomValue); 
-            this.collapseRadius = (int)(this.collapseRadius / this.zoom * zoomValue); 
+            this.leftBuffer = (int)(this.leftBuffer / this.zoom * zoomValue);
+            this.collapseRadius = (int)(this.collapseRadius / this.zoom * zoomValue);
 
             this.zoom = zoomValue;
         }
@@ -850,7 +859,7 @@ namespace JsmMind
                 {
                     hb = this.height;
                 }
-            }  
+            }
             return hb;
         }
 
@@ -878,7 +887,7 @@ namespace JsmMind
                 minHeight = subject.CenterPoint.Y - subject.Height / 2;
             }
             return minHeight;
-        } 
+        }
 
         private int GetSubjectMaxHeight(SubjectBase subject, int max)
         {
@@ -893,10 +902,10 @@ namespace JsmMind
                     }
                     else
                     {
-                        if ((viewMode == MapViewModel.TreeMap || viewMode== MapViewModel.Structure)  && n.childSubjects.Count > 0)
+                        if ((viewMode == MapViewModel.TreeMap || viewMode == MapViewModel.Structure) && n.childSubjects.Count > 0)
                         {
-                            maxHeight = n.CenterPoint.Y + n.Height / 2 + n.branchLinkWidth+n.CollapseRadius;
-                        } 
+                            maxHeight = n.CenterPoint.Y + n.Height / 2 + n.branchLinkWidth + n.CollapseRadius;
+                        }
                     }
 
                     if (n.CenterPoint.Y + n.Height / 2 > maxHeight)
@@ -909,7 +918,7 @@ namespace JsmMind
             {
                 if ((viewMode == MapViewModel.TreeMap || viewMode == MapViewModel.Structure) && subject.childSubjects.Count > 0)
                 {
-                    maxHeight = subject.CenterPoint.Y + subject.Height / 2+subject.branchLinkWidth+subject.collapseRadius;
+                    maxHeight = subject.CenterPoint.Y + subject.Height / 2 + subject.branchLinkWidth + subject.collapseRadius;
                 }
             }
 
@@ -981,7 +990,7 @@ namespace JsmMind
                     if (n.Expanded)
                     {
                         maxWidth = GetSubjectMaxWidth(n, maxWidth);
-                    } 
+                    }
                     if (n.CenterPoint.X + n.Width / 2 > maxWidth)
                     {
                         maxWidth = n.CenterPoint.X + n.Width / 2;
@@ -993,9 +1002,9 @@ namespace JsmMind
                 maxWidth = subject.CenterPoint.X + subject.Width / 2;
             }
             return maxWidth;
-        } 
-         
-         
+        }
+
+
         /// <summary>
         /// 设置主题样式
         /// </summary>
@@ -1007,85 +1016,17 @@ namespace JsmMind
             if (this.level == lv)
             {
                 return;
-            } 
+            }
             this.level = lv;
 
-            if (this.GetType() == typeof(TitleSubject))
-            {
-                switch (this.level)
-                {
-                    case 0:  
-                        //this.Width = 133;
-                        //this.Height = 35;
-                        this.MarginWidth = 20;
-                        this.MarginHeight = 10; 
-                        this.branchLinkWidth=30;
-                        this.branchSplitHeight=12;
-                        this.imageSplitWidth=5;
-                        this.leftBuffer = 30;
-                        this.BackColor = Color.WhiteSmoke;
-                        this.ForeColor = Color.DimGray;
-                        this.BorderColor = Color.DimGray;
-                        this.Font = new Font("微软雅黑", 12.0f);
-                        this.Title = (this.Title == "主题" || this.Title == "子主题") ? "浮动主题" : this.Title; 
-                        this.AdjustSubjectSize(false);
-                        break;
-                    case 1:
-                        //this.Width = 93;
-                        //this.Height = 35;
-                        this.marginWidth = 20;
-                        this.marginHeight = 6;
-                        this.branchLinkWidth=30;
-                        this.branchSplitHeight=12;
-                        this.imageSplitWidth=5;
-                        this.leftBuffer = 30;
-                        this.BackColor = Color.AliceBlue;
-                        this.ForeColor = Color.DimGray;
-                        this.BorderColor = Color.SteelBlue;
-                        this.Font = new Font("微软雅黑", 12.0f);
-                        this.Title =(this.Title == "主题" || this.Title == "子主题") ? "主题" : this.Title;
-                        this.AdjustSubjectSize(false);
-                        break;
-                    case 2:
-                        //this.Width = 83;
-                        //this.Height = 25;
-                        this.marginWidth = 15;
-                        this.marginHeight = 3;
-                        this.branchLinkWidth=30;
-                        this.branchSplitHeight=12;
-                        this.imageSplitWidth=5;
-                        this.leftBuffer = 30;
-                        this.BackColor = Color.Honeydew;
-                        this.ForeColor = Color.DimGray;
-                        this.BorderColor = Color.Green;
-                        this.Font = new Font("微软雅黑", 10.0f);
-                        this.Title = (this.Title == "主题" || this.Title == "子主题") ? "子主题" : this.Title;
-                        this.AdjustSubjectSize(false); 
-                        break;
-                    case 3:
-                        //this.Width = 63;
-                        //this.Height = 20;
-                        this.marginWidth = 5;
-                        this.marginHeight = 2;
-                        this.branchLinkWidth=30;
-                        this.branchSplitHeight=12;
-                        this.imageSplitWidth=5;
-                        this.leftBuffer = 30;
-                        this.BackColor = Color.White;
-                        this.ForeColor = Color.DimGray;
-                        this.BorderColor = Color.Transparent;
-                        this.Font = new Font("微软雅黑", 8.0f);
-                        this.Title = (this.Title == "主题" || this.Title == "子主题") ? "子主题" : this.Title;
-                        this.AdjustSubjectSize(false); 
-                        break;
-                }
-            }
+            mindDocThem.SetThemeStyle(this);
+            this.AdjustSubjectSize(false);
             this.ZoomValue();
             foreach (SubjectBase childSubject in ChildSubjects)
             {
                 childSubject.SetTitleStyle();
             }
-        } 
+        }
 
         /// <summary>
         /// 获取顶层主题
@@ -1094,10 +1035,10 @@ namespace JsmMind
         protected SubjectBase GetTopSubect()
         {
             SubjectBase topSubject = this;
-            while(topSubject.parentSubject!=null)
+            while (topSubject.parentSubject != null)
             {
-                topSubject = topSubject.parentSubject; 
-            } 
+                topSubject = topSubject.parentSubject;
+            }
             return topSubject;
         }
         public void TranslateLightColor()
@@ -1113,15 +1054,15 @@ namespace JsmMind
         {
             get { return title; }
             set { title = value; }
-        } 
+        }
         public string Content
         {
             get { return content; }
             set { content = value; }
-        } 
+        }
         public int Level
         {
-            get { return level; } 
+            get { return level; }
         }
 
         public int Direction
@@ -1159,7 +1100,11 @@ namespace JsmMind
             get { return activeColor; }
             set { activeColor = value; }
         }
-         
+        public MapLinkStyle LineStyle
+        {
+            get { return lineStyle; }
+            set { lineStyle = value; }
+        }
         public Point CenterPoint
         {
             get { return centerPoint; }
@@ -1174,13 +1119,13 @@ namespace JsmMind
         {
             get { return height; }
             set { height = value; }
-        } 
+        }
         public int MarginWidth
         {
             get { return marginWidth; }
             set { marginWidth = value; }
         }
-        
+
         public int MarginHeight
         {
             get { return marginHeight; }
@@ -1190,7 +1135,7 @@ namespace JsmMind
         {
             get { return branchLinkWidth; }
             set { branchLinkWidth = value; }
-        } 
+        }
         public int BranchSplitHeight
         {
             get { return branchSplitHeight; }
@@ -1203,6 +1148,12 @@ namespace JsmMind
             set { imageSplitWidth = value; }
         }
 
+        public bool EqualWidth
+        {
+            get { return equalWidth; }
+            set { equalWidth = value; }
+        }
+
         public int CollapseRadius
         {
             get { return collapseRadius; }
@@ -1212,8 +1163,8 @@ namespace JsmMind
 
         public bool Expanded
         {
-            get { return expanded; } 
-        } 
+            get { return expanded; }
+        }
         public bool Visible
         {
             get { return visible; }
@@ -1257,23 +1208,23 @@ namespace JsmMind
             get { return rectPlusBottom; }
             set { rectPlusBottom = value; }
         }
-         
+
         public SubjectBase ParentSubject
         {
             get { return parentSubject; }
             set
             {
-                if (parentSubject!=null)
+                if (parentSubject != null)
                 {
-                    if(parentSubject.childSubjects.Contains(this))
+                    if (parentSubject.childSubjects.Contains(this))
                     {
                         parentSubject.childSubjects.Remove(this);
                     }
-                } 
+                }
 
                 parentSubject = value;
-                if (parentSubject!=null)
-                    parentSubject.InsertSubject(this,parentSubject.childSubjects.Count);
+                if (parentSubject != null)
+                    parentSubject.InsertSubject(this, parentSubject.childSubjects.Count);
             }
         }
 
@@ -1292,14 +1243,14 @@ namespace JsmMind
         {
             get { return childSubjects; }
             set { childSubjects = value; }
-        } 
-         
+        }
+
 
         public List<SubjectPicture> SubjectPictures
         {
             get { return subjectPictures; }
             set { subjectPictures = value; }
-        } 
+        }
         public int MoveX
         {
             get { return moveX; }
@@ -1324,23 +1275,12 @@ namespace JsmMind
     /// 中心主题
     /// </summary>
     [Serializable]
-    public class CenterSubject:SubjectBase
+    public class CenterSubject : SubjectBase
     {
         public CenterSubject()
         {
-            this.Width = 133;
-            this.Height = 45;
-            this.MarginWidth = 20;
-            this.MarginHeight = 10;
-            this.BackColor = Color.WhiteSmoke;
-            this.ForeColor = Color.DimGray;
-            this.BorderColor = Color.DimGray;
-            this.Font = new Font("微软雅黑", 14.0f);
-            this.Title = "中心主题";
-            this.BranchLinkWidth = 20;
-            this.BranchSplitHeight=24;
-
-            this.level = 0; 
+            mindDocThem.SetThemeStyle(this);
+            this.AdjustSubjectSize(false);
         }
 
         public override int[] GetPlusVisible()
@@ -1351,25 +1291,25 @@ namespace JsmMind
             plus[1] = 0;
             plus[2] = 0;
             plus[3] = 0;
-            if(viewMode== MapViewModel.ExpandTwoSides)
+            if (viewMode == MapViewModel.ExpandTwoSides)
             {
                 plus[0] = 1;
-                plus[2] = 1; 
-            } 
-            else if(viewMode== MapViewModel.ExpandRightSide)
+                plus[2] = 1;
+            }
+            else if (viewMode == MapViewModel.ExpandRightSide)
             {
                 plus[2] = 1;
             }
-            else if(viewMode== MapViewModel.Structure)
+            else if (viewMode == MapViewModel.Structure)
             {
                 plus[3] = 1;
             }
-            else if(viewMode== MapViewModel.TreeMap)
+            else if (viewMode == MapViewModel.TreeMap)
             {
                 plus[3] = 1;
             }
             return plus;
-        } 
+        }
     }
     /// <summary>
     /// 主要主题
@@ -1398,10 +1338,10 @@ namespace JsmMind
                 bool bAddChild = true;
                 int insertPos = 0; //插入位置
 
-                if (viewMode == MapViewModel.Structure)   
+                if (viewMode == MapViewModel.Structure)
                 {
                     bAddChild = plus == 2 || plus == 4; //上下添加子主题
-                    insertPos = plus == 1 ? 0 : 1;    
+                    insertPos = plus == 1 ? 0 : 1;
                 }
                 else
                 {
@@ -1412,7 +1352,7 @@ namespace JsmMind
 
                 if (bAddChild)  //子主题
                 {
-                    this.ParentSubject = subject;  
+                    this.ParentSubject = subject;
                 }
                 else  //兄弟主题
                 {
@@ -1432,26 +1372,26 @@ namespace JsmMind
                 }
             }
         }
-         
+
         /// <summary>
         /// 初始化主题
         /// </summary>
         /// <param name="brotherSubject">同层主题</param>
         /// <param name="insertUp">是否向上插入</param>
-        public TitleSubject(SubjectBase brotherSubject,bool insertUp)
-        { 
-           
-        }   
+        public TitleSubject(SubjectBase brotherSubject, bool insertUp)
+        {
+
+        }
     }
 
     /// <summary>
     /// 附注
     /// </summary>
     [Serializable]
-    public class AttachSubject:SubjectBase
-    {  
+    public class AttachSubject : SubjectBase
+    {
         public AttachSubject(SubjectBase subject)
-        { 
+        {
             this.Width = 63;
             this.Height = 30;
             this.MarginWidth = 10;
@@ -1460,97 +1400,586 @@ namespace JsmMind
             this.ForeColor = Color.DimGray;
             this.BorderColor = Color.Orange;
             this.Font = new Font("微软雅黑", 10.0f);
-            this.Title = "附注"; 
+            this.Title = "附注";
             //插入兄弟主题
             SubjectBase fatherSubject = subject.ParentSubject;
-            if(fatherSubject!=null)
+            if (fatherSubject != null)
             {
                 this.relateSubject = subject;
-                int index = fatherSubject.ChildSubjects.IndexOf(subject); 
+                int index = fatherSubject.ChildSubjects.IndexOf(subject);
                 fatherSubject.InsertSubject(this, index); //默认插入到关联主题的上面
             }
 
         }
-         
+
         /// <summary>
         /// 获取主题显示总高度（所有子主题）
         /// </summary>
         /// <returns></returns>
         public override int GetTotalHeight()
-        { 
-            int hb=base.GetTotalHeight();
+        {
+            int hb = base.GetTotalHeight();
             SubjectBase relateSubject = this.relateSubject;
-            if(this.MoveX!=-10000)
+            if (this.MoveX != -10000)
             {
-                int hd = Math.Abs(this.CenterPoint.Y - relateSubject.CenterPoint.Y) - this.ParentSubject.BranchSplitHeight-2;
+                int hd = Math.Abs(this.CenterPoint.Y - relateSubject.CenterPoint.Y) - this.ParentSubject.BranchSplitHeight - 2;
                 if (hb < hd)
                 {
                     hb = hd;
                 }
 
             }
-          
+
             return hb;
         }
     }
 
 
-    #endregion 
-	#region MindDocView
-	/// <summary>
-	/// MindDocView provides a hybrid listview whos first
-	/// column can behave as a treeview. This control extends
-	/// ContainerListView, allowing subitems to contain 
-	/// controls.
-	/// </summary>`
-	public class MindDocView : JsmMind.ContainerListView
-	{
-		#region Events 
+    #endregion
+    #region Theme
+
+    //public enum MapTheme { Default, Classics, Bubble, Lemo, Black };
+
+    public class ThemeFactory
+    {
+        public static MindDocTheme CreateTheme(MapTheme theme)
+        {
+            MindDocTheme mindDocTheme = null;
+            switch (theme)
+            {
+                case MapTheme.Default:
+                    mindDocTheme = new MindDocThemeDefault();
+                    break;
+                case MapTheme.Classics:
+                    mindDocTheme = new MindDocThemeClassics();
+                    break;
+                case MapTheme.Bubble:
+                    mindDocTheme = new MindDocThemeBubble();
+                    break;
+                case MapTheme.Lemo:
+                    mindDocTheme = new MindDocThemeLemo();
+                    break;
+                case MapTheme.Black:
+                    mindDocTheme = new MindDocThemeBlack();
+                    break;
+            }
+            return mindDocTheme;
+        }
+    }
+
+    public class MindDocTheme
+    {
+        /// <summary>
+        /// 设置主题样式
+        /// </summary>
+        public void SetThemeStyle(SubjectBase subject)
+        {
+            if (subject.GetType() == typeof(CenterSubject))
+            {
+                SetCenterSubjectStyle(subject);
+                return;
+            }
+
+            switch (subject.Level)
+            {
+                case 0:
+                    SetTitleStyleLevel0(subject);
+                    break;
+                case 1:
+                    SetTitleStyleLevel1(subject);
+                    break;
+                case 2:
+                    SetTitleStyleLevel2(subject);
+                    break;
+                case 3:
+                    SetTitleStyleLevel3(subject);
+                    break;
+            }
+        }
+
+
+        protected virtual void SetCenterSubjectStyle(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 10;
+
+            subject.BackColor = Color.WhiteSmoke;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.DimGray;
+            subject.Font = new Font("微软雅黑", 14.0f);
+
+            subject.BranchLinkWidth = 20;
+            subject.BranchSplitHeight = 24;
+            subject.EqualWidth = false;
+            subject.LineStyle = MapLinkStyle.RoundLine;
+
+            subject.Title = subject.Title == "主题" ? "中心主题" : subject.Title;
+        }
+
+        protected virtual void SetTitleStyleLevel0(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 10;
+
+            subject.BackColor = Color.WhiteSmoke;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.DimGray;
+            subject.Font = new Font("微软雅黑", 12.0f);
+            subject.LineStyle = MapLinkStyle.RoundLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "浮动主题" : subject.Title;
+        }
+
+        protected virtual void SetTitleStyleLevel1(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 6;
+
+            subject.BackColor = Color.AliceBlue;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.SteelBlue;
+            subject.Font = new Font("微软雅黑", 12.0f);
+            subject.LineStyle = MapLinkStyle.RoundLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "主题" : subject.Title;
+        }
+
+        protected virtual void SetTitleStyleLevel2(SubjectBase subject)
+        {
+            subject.MarginWidth = 15;
+            subject.MarginHeight = 3;
+
+            subject.BackColor = Color.Honeydew;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.Green;
+            subject.Font = new Font("微软雅黑", 10.0f);
+            subject.LineStyle = MapLinkStyle.RoundLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "子主题" : subject.Title;
+        }
+
+        protected virtual void SetTitleStyleLevel3(SubjectBase subject)
+        {
+            subject.MarginWidth = 5;
+            subject.MarginHeight = 2;
+
+            subject.BackColor = Color.White;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.Transparent;
+            subject.Font = new Font("微软雅黑", 8.0f);
+            subject.LineStyle = MapLinkStyle.RoundLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "子主题" : subject.Title;
+        }
+
+
+    }
+
+    public class MindDocThemeDefault : MindDocTheme
+    {
+        public MindDocThemeDefault()
+        {
+
+        }
+
+
+    }
+
+    public class MindDocThemeClassics : MindDocTheme
+    {
+        public MindDocThemeClassics()
+        {
+        }
+        protected override void SetCenterSubjectStyle(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 10;
+
+            subject.BackColor = Color.LightSteelBlue;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.LightGray;
+            subject.Font = new Font("微软雅黑", 14.0f, FontStyle.Bold);
+
+            subject.BranchLinkWidth = 20;
+            subject.BranchSplitHeight = 24;
+
+            subject.EqualWidth = false;
+            subject.LineStyle = MapLinkStyle.Curve;
+
+            subject.Title = subject.Title == "主题" ? "中心主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel0(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 10;
+
+            subject.BackColor = Color.WhiteSmoke;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.DimGray;
+            subject.Font = new Font("微软雅黑", 12.0f);
+            subject.LineStyle = MapLinkStyle.Curve;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "浮动主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel1(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 6;
+
+            subject.BackColor = Color.FromArgb(65, Color.LightSteelBlue);
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.Gray;
+            subject.Font = new Font("微软雅黑", 12.0f, FontStyle.Bold);
+            subject.LineStyle = MapLinkStyle.Curve;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel2(SubjectBase subject)
+        {
+            subject.MarginWidth = 5;
+            subject.MarginHeight = 3;
+
+            subject.BackColor = Color.Transparent;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.Transparent;
+            subject.Font = new Font("微软雅黑", 10.0f);
+
+            subject.LineStyle = MapLinkStyle.Curve;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "子主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel3(SubjectBase subject)
+        {
+            subject.MarginWidth = 5;
+            subject.MarginHeight = 2;
+
+            subject.BackColor = Color.White;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.Transparent;
+            subject.Font = new Font("微软雅黑", 8.0f);
+
+            subject.LineStyle = MapLinkStyle.Curve;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "子主题" : subject.Title;
+        }
+    }
+
+    public class MindDocThemeBubble : MindDocTheme
+    {
+        public MindDocThemeBubble()
+        {
+
+        }
+        protected override void SetCenterSubjectStyle(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 10;
+
+            subject.BackColor = Color.DarkOrange;
+            subject.ForeColor = Color.SaddleBrown;
+            subject.BorderColor = Color.OrangeRed;
+            subject.Font = new Font("微软雅黑", 14.0f, FontStyle.Bold);
+
+            subject.BranchLinkWidth = 20;
+            subject.BranchSplitHeight = 24;
+
+            subject.EqualWidth = true;
+            subject.LineStyle = MapLinkStyle.Curve;
+
+            subject.Title = subject.Title == "主题" ? "中心主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel0(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 10;
+
+            subject.BackColor = Color.WhiteSmoke;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.DimGray;
+            subject.Font = new Font("微软雅黑", 12.0f);
+            subject.LineStyle = MapLinkStyle.Curve;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "浮动主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel1(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 6;
+
+            subject.BackColor = Color.FromArgb(180, Color.DodgerBlue);
+            subject.ForeColor = Color.MidnightBlue;
+            subject.BorderColor = Color.Gray;
+            subject.Font = new Font("微软雅黑", 12.0f, FontStyle.Bold);
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel2(SubjectBase subject)
+        {
+            subject.MarginWidth = 5;
+            subject.MarginHeight = 3;
+
+            subject.BackColor = Color.Transparent;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.Transparent;
+            subject.Font = new Font("微软雅黑", 10.0f);
+
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "子主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel3(SubjectBase subject)
+        {
+            subject.MarginWidth = 5;
+            subject.MarginHeight = 2;
+
+            subject.BackColor = Color.Transparent;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.Transparent;
+            subject.Font = new Font("微软雅黑", 8.0f);
+
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "子主题" : subject.Title;
+        }
+    }
+
+    public class MindDocThemeLemo : MindDocTheme
+    {
+        public MindDocThemeLemo()
+        {
+
+        }
+        protected override void SetCenterSubjectStyle(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 10;
+
+            subject.BackColor = Color.LimeGreen;
+            subject.ForeColor = Color.WhiteSmoke;
+            subject.BorderColor = Color.DarkGreen;
+            subject.Font = new Font("微软雅黑", 14.0f, FontStyle.Bold);
+
+            subject.BranchLinkWidth = 20;
+            subject.BranchSplitHeight = 24;
+
+            subject.EqualWidth = false;
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = subject.Title == "主题" ? "中心主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel0(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 10;
+
+            subject.BackColor = Color.FromArgb(102, 205, 0);
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.DimGray;
+            subject.Font = new Font("微软雅黑", 12.0f);
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "浮动主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel1(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 6;
+
+            subject.BackColor = Color.YellowGreen;
+            subject.ForeColor = Color.WhiteSmoke;
+            subject.BorderColor = Color.Gray;
+            subject.Font = new Font("微软雅黑", 12.0f, FontStyle.Bold);
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel2(SubjectBase subject)
+        {
+            subject.MarginWidth = 5;
+            subject.MarginHeight = 3;
+
+            subject.BackColor = Color.Transparent;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.Transparent;
+            subject.Font = new Font("微软雅黑", 10.0f);
+
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "子主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel3(SubjectBase subject)
+        {
+            subject.MarginWidth = 5;
+            subject.MarginHeight = 2;
+
+            subject.BackColor = Color.Transparent;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.Transparent;
+            subject.Font = new Font("微软雅黑", 8.0f);
+
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "子主题" : subject.Title;
+        }
+    }
+
+    public class MindDocThemeBlack : MindDocTheme
+    {
+        public MindDocThemeBlack()
+        {
+
+        }
+        protected override void SetCenterSubjectStyle(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 10;
+
+            subject.BackColor = Color.FromArgb(16,78,137);
+            subject.ForeColor = Color.WhiteSmoke;
+            subject.BorderColor = Color.LightSteelBlue;
+            subject.Font = new Font("微软雅黑", 14.0f, FontStyle.Bold);
+
+            subject.BranchLinkWidth = 20;
+            subject.BranchSplitHeight = 24;
+
+            subject.EqualWidth = false;
+            subject.LineStyle = MapLinkStyle.Curve;
+
+            subject.Title = subject.Title == "主题" ? "中心主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel0(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 10;
+
+            subject.BackColor = Color.WhiteSmoke;
+            subject.ForeColor = Color.DimGray;
+            subject.BorderColor = Color.DimGray;
+            subject.Font = new Font("微软雅黑", 12.0f);
+            subject.LineStyle = MapLinkStyle.Curve;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "浮动主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel1(SubjectBase subject)
+        {
+            subject.MarginWidth = 20;
+            subject.MarginHeight = 6;
+
+            subject.BackColor = Color.FromArgb(200, Color.DimGray);
+            subject.ForeColor = Color.WhiteSmoke;
+            subject.BorderColor = Color.Gray;
+            subject.Font = new Font("微软雅黑", 12.0f, FontStyle.Bold);
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel2(SubjectBase subject)
+        {
+            subject.MarginWidth = 5;
+            subject.MarginHeight = 3;
+
+            subject.BackColor = Color.Transparent;
+            subject.ForeColor = Color.Gray;
+            subject.BorderColor = Color.Transparent;
+            subject.Font = new Font("微软雅黑", 10.0f);
+
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "子主题" : subject.Title;
+        }
+
+        protected override void SetTitleStyleLevel3(SubjectBase subject)
+        {
+            subject.MarginWidth = 5;
+            subject.MarginHeight = 2;
+
+            subject.BackColor = Color.Transparent;
+            subject.ForeColor = Color.Gray;
+            subject.BorderColor = Color.Transparent;
+            subject.Font = new Font("微软雅黑", 8.0f);
+
+            subject.LineStyle = MapLinkStyle.RectLine;
+
+            subject.Title = (subject.Title == "主题" || subject.Title == "子主题") ? "子主题" : subject.Title;
+        }
+    }
+
+
+
+    #endregion
+    #region MindDocView
+    /// <summary>
+    /// MindDocView provides a hybrid listview whos first
+    /// column can behave as a treeview. This control extends
+    /// ContainerListView, allowing subitems to contain 
+    /// controls.
+    /// </summary>`
+    public class MindDocView : JsmMind.ContainerListView
+    {
+        #region Events
         public delegate void SubjectEventHandler(object sender, SubjectBase e);
 
         [Description("Occurs after the Subject is double click")]
         public event SubjectEventHandler SubjectDoubleClick;
 
         [Description("Occurs after the Subject is double click")]
-        public event SubjectEventHandler SubjectClick; 
-		#endregion
+        public event SubjectEventHandler SubjectClick;
+        #endregion
 
-		#region Variables  
+        #region Variables
         private List<SubjectBase> subjectNodes;
-        
-		private bool mouseActivate = false;
-		private bool allCollapsed = false;
-         
+
+        private bool mouseActivate = false;
+        private bool allCollapsed = false;
+
         //设置选中的节点; 
         private SubjectBase selectedSubject = null;
         private SubjectBase activeSubject = null;
-        private SubjectBase collapseSubject = null; 
+        private SubjectBase collapseSubject = null;
         private SubjectBase linkSubject = null;
-        private SubjectBase centerProject = null;  
+        private SubjectBase centerProject = null;
         private SubjectBase dragSubject = null;
 
         private int dragStartPx = 0;
         private int dragStartPy = 0;
-         
+
         private int selectPlus = 0;  //1,2,3,4分别表示Lef,Top,Right,Bottom,0表示未选中
-           
-        private bool openLinkSubject = false;  
-         
+
+        private bool openLinkSubject = false;
+
         TextBox txtNode = null;
         Image imgRender = null;
         System.Windows.Forms.Timer timerTxt;
-         
-		#endregion
+        private MapTheme theme = MapTheme.Default;
+        Dictionary<string, Image> backGroundImg = new Dictionary<string, Image>();
+        #endregion
 
-		#region Constructor
-        public MindDocView() : base()
-        { 
+        #region Constructor
+        public MindDocView()
+            : base()
+        {
             subjectNodes = new List<SubjectBase>();
 
             centerProject = new CenterSubject();
             centerProject.CenterPoint = new Point(this.Width / 2, this.Height / 2);
             subjectNodes.Add(centerProject);
-              
+
             txtNode = new TextBox();
             txtNode.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             txtNode.MouseDown += txtNode_MouseDown;
@@ -1563,37 +1992,60 @@ namespace JsmMind
             timerTxt.Interval = 1000;
             timerTxt.Enabled = false;
             timerTxt.Tick += timerTxt_Tick;
-            imgRender = new Bitmap(100, 100); 
+            imgRender = new Bitmap(100, 100);
 
             // Use reflection to load the
             // embedded bitmaps for the
             // styles plus and minus icons
-            Assembly myAssembly = Assembly.GetAssembly(Type.GetType("JsmMind.MindDocView")); 
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MindDocView));
-           //// bmpMinus = ((System.Drawing.Bitmap)(resources.GetObject("tv_minus.bmp")));
+            //Assembly myAssembly = Assembly.GetAssembly(Type.GetType("JsmMind.MindDocView")); 
+            //System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MindDocView));
+            //// bmpMinus = ((System.Drawing.Bitmap)(resources.GetObject("tv_minus.bmp")));
         }
 
 
         #endregion
 
-		#region Properties 
+        #region Properties
 
-		[
-		Category("Behavior"),
-		Description("Determins wether an item is activated or expanded by a double click."),
-		DefaultValue(false)
-		]
-		public bool MouseActivte
-		{
-			get { return mouseActivate; }
-			set { mouseActivate = value; }
-		} 
+        [
+        Category("Behavior"),
+        Description("Determins wether an item is activated or expanded by a double click."),
+        DefaultValue(false)
+        ]
+        public bool MouseActivte
+        {
+            get { return mouseActivate; }
+            set { mouseActivate = value; }
+        }
 
-		[Browsable(false)]
-		public override ContainerListViewItemCollection Items
-		{
-			get { return items; }
-		}
+        [Browsable(false)]
+        public override ContainerListViewItemCollection Items
+        {
+            get { return items; }
+        }
+
+        [
+        Category("Behavior"),
+        Description("The theme of MapView."),
+        DefaultValue(MapTheme.Default)
+        ]
+        public MapTheme Theme
+        {
+            get { return theme; }
+            set
+            {
+                theme = value;
+                SubjectBase.mindDocThem = ThemeFactory.CreateTheme(theme);
+
+                centerProject.ResortChildSubject();
+            }
+        }
+        public Dictionary<string, Image> BackgroundImg
+        {
+            get { return backGroundImg; }
+            set { backGroundImg = value; }
+        }
+
 
         //[
         //Category("Behavior"),
@@ -1621,7 +2073,7 @@ namespace JsmMind
                 centerProject.ResortChildSubject();
             }
         }
-		#endregion
+        #endregion
 
         #region Method
 
@@ -1642,7 +2094,7 @@ namespace JsmMind
         public void ZoomMap(float zoom)
         {
             SubjectBase.zoomValue = zoom;
-            foreach(SubjectBase subject in subjectNodes)
+            foreach (SubjectBase subject in subjectNodes)
             {
                 subject.ZoomValue();
             }
@@ -1652,8 +2104,8 @@ namespace JsmMind
         #endregion
         #region Overrides
         public override bool PreProcessMessage(ref Message msg)
-		{
-			if (msg.Msg == WM_KEYDOWN)
+        {
+            if (msg.Msg == WM_KEYDOWN)
             {
                 Keys keyData = ((Keys)(int)msg.WParam) | ModifierKeys;
                 Keys keyCode = ((Keys)(int)msg.WParam);
@@ -1672,43 +2124,43 @@ namespace JsmMind
                 {
                     Invalidate();
                     return true;
-                }						
-			}
-
-			return base.PreProcessMessage(ref msg);
-		}
-
-		protected override void OnResize(EventArgs e)
-		{
-			base.OnResize(e);
-
-            if (centerProject != null && subjectNodes.Count<2)
-            { 
-                centerProject.CenterPoint = new Point(this.Width / 2, this.Height / 2); 
+                }
             }
-		}
 
-         
+            return base.PreProcessMessage(ref msg);
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+
+            if (centerProject != null && subjectNodes.Count < 2)
+            {
+                centerProject.CenterPoint = new Point(this.Width / 2, this.Height / 2);
+            }
+        }
+
+
         System.Text.RegularExpressions.Regex regNumber = new System.Text.RegularExpressions.Regex(@"^[-]?\d+[.]?\d*$");
-        
-		protected override void OnMouseDown(MouseEventArgs e)
-		{
-			base.OnMouseDown(e);
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
 
             HideTxtBox();
-             
+
             if (e.Button == MouseButtons.Left)
-            {   
+            {
                 if (e.Y > headerBuffer) //点击标题以下区域，选择任务事件
-                { 
+                {
                     //主题选中状态
                     if (selectedSubject != null)
                     {
                         //是否点击扩展按钮
                         int plus = PlusInArea(e, selectedSubject);
-                        if (plus > 0) 
+                        if (plus > 0)
                         {
-                            SubjectBase subject = null; 
+                            SubjectBase subject = null;
                             subject = new TitleSubject(selectedSubject, plus);
                             if (subject != null)
                             {
@@ -1719,15 +2171,15 @@ namespace JsmMind
                             return;
                         }
 
-                        if(e.Clicks==2)
-                        { 
+                        if (e.Clicks == 2)
+                        {
                             //是否点击标题
                             if (TitleInArea(e, selectedSubject))
                             {
                                 txtNode.Tag = selectedSubject;
                                 ShowTxtBox();
                                 return;
-                            } 
+                            }
                         }
                     }
 
@@ -1738,10 +2190,10 @@ namespace JsmMind
                         collapseSubject.CollapseChildSubject(!collapseSubject.Expanded);
                         Invalidate();
                         return;
-                    } 
+                    }
 
                     //是否选中主题
-                    selectedSubject = null; 
+                    selectedSubject = null;
                     SubjectBase subjectNode = SubjectInArea(e);
                     if (subjectNode != null)
                     {
@@ -1753,10 +2205,10 @@ namespace JsmMind
                         if (linkSubject != null)
                         {
                             subjectNode.LinkSubject = linkSubject;
-                            linkSubject = null; 
+                            linkSubject = null;
                         }
 
-                        if(openLinkSubject)
+                        if (openLinkSubject)
                         {
                             linkSubject = subjectNode;
                             openLinkSubject = false;
@@ -1770,11 +2222,11 @@ namespace JsmMind
                         dragStartPx = e.X;
                         dragStartPy = e.Y;
                     }
-                } 
+                }
                 Invalidate();
 
-            } 
-		}
+            }
+        }
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
@@ -1783,12 +2235,12 @@ namespace JsmMind
             collapseSubject = null;
             selectPlus = 0;
             if (e.Y > headerBuffer)
-            { 
+            {
                 //处理拖拽主题
-                if(dragSubject!=null)  
+                if (dragSubject != null)
                 {
                     SubjectBase nowSubject = selectedSubject;
-                     
+
                     int scaleX = e.X - dragStartPx;
                     int scaleY = e.Y - dragStartPy;
                     if ((Math.Abs(scaleX) > 10 || Math.Abs(scaleY) > 10) && nowSubject != null)
@@ -1799,7 +2251,7 @@ namespace JsmMind
                         SubjectBase subjectNode = SubjectInArea(e);
                         if (subjectNode != null)
                         {
-                            activeSubject = subjectNode; 
+                            activeSubject = subjectNode;
                             Cursor.Current = Cursors.Hand;
                         }
                         else
@@ -1814,7 +2266,7 @@ namespace JsmMind
                     SubjectBase subjectNode = SubjectInArea(e);
                     if (subjectNode != null)  //鼠标移动在主题上 
                     {
-                        activeSubject = subjectNode;  
+                        activeSubject = subjectNode;
                     }
                     else if (CollaspeInArea(e) != null)//鼠标移动在折叠按钮上 
                     {
@@ -1823,14 +2275,14 @@ namespace JsmMind
                         {
                             collapseSubject = subjectNode;
                         }
-                    }  
-                    else  
+                    }
+                    else
                     {
-                        
+
                     }
 
-                    if (selectedSubject != null)  
-                    { 
+                    if (selectedSubject != null)
+                    {
                         //主题选中状态
                         int plus = PlusInArea(e, selectedSubject); //鼠标移动在扩展按钮上
                         selectPlus = plus;
@@ -1840,21 +2292,21 @@ namespace JsmMind
                             //Cursor.Current = Cursors.IBeam;
                         }
                         else
-                        { 
+                        {
                             //Cursor.Current = Cursors.Default;
                         }
                     }
-                     
-                } 
-                Invalidate(); 
-            }  
+
+                }
+                Invalidate();
+            }
         }
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
-             
-            if(dragSubject!=null)
+
+            if (dragSubject != null)
             {
                 //当前拖拽主题的实际主题
                 SubjectBase nowSubject = selectedSubject;
@@ -1863,7 +2315,7 @@ namespace JsmMind
                 int scaleY = e.Y - dragStartPy;
                 //处理非中心主题的拖拽
                 if ((Math.Abs(scaleX) > 10 || Math.Abs(scaleY) > 10) && nowSubject != null)
-                { 
+                {
                     //是否拖拽到其他主题上
                     SubjectBase subjectNode = SubjectInArea(e);
                     if (subjectNode != null) //1.将主题作为移动主题的父主题
@@ -1873,9 +2325,9 @@ namespace JsmMind
                         bool isDragSelf = false;
                         bool isDragParent = false;
                         SubjectBase subjectTemp = subjectNode.ParentSubject;
-                        while (subjectTemp!=null)
+                        while (subjectTemp != null)
                         {
-                            if(subjectTemp == nowSubject)
+                            if (subjectTemp == nowSubject)
                             {
                                 isDragChild = true;
                                 break;
@@ -1886,24 +2338,24 @@ namespace JsmMind
                         {
                             isDragSelf = true;
                         }
-                        if(nowSubject.ParentSubject==subjectNode)
+                        if (nowSubject.ParentSubject == subjectNode)
                         {
                             isDragParent = true;
                         }
-                        if (isDragChild == false && isDragSelf==false && isDragParent==false)
+                        if (isDragChild == false && isDragSelf == false && isDragParent == false)
                         {
-                            if(SubjectBase.FloatSubjects.Contains(nowSubject))
+                            if (SubjectBase.FloatSubjects.Contains(nowSubject))
                             {
                                 SubjectBase.FloatSubjects.Remove(nowSubject);
                             }
                             nowSubject.MoveX = -10000;
-                            nowSubject.ParentSubject = subjectNode;   
+                            nowSubject.ParentSubject = subjectNode;
                         }
                     }
                     else  //2.移动拖拽主题位置
                     {
                         nowSubject.MoveSubjectPosition(dragSubject.CenterPoint);
-                    } 
+                    }
                 }
 
                 dragSubject = null;
@@ -1914,11 +2366,11 @@ namespace JsmMind
             }
         }
         protected override void OnKeyUp(KeyEventArgs e)
-		{
-			base.OnKeyUp(e);
+        {
+            base.OnKeyUp(e);
 
-			if (e.KeyCode == Keys.F5)
-			{
+            if (e.KeyCode == Keys.F5)
+            {
                 if (allCollapsed)
                 {
                     //ExpandAll();  
@@ -1927,7 +2379,7 @@ namespace JsmMind
                 {
                     //CollapseAll(); 
                 }
-			}
+            }
 
             if (selectedSubject != null)
             {
@@ -1991,9 +2443,9 @@ namespace JsmMind
                         break;
                 }
                 Invalidate();
-            }  
-		}
- 
+            }
+        }
+
         protected override void DrawHeaders(Graphics g, Rectangle r)
         {
             // render column headers and trailing column header
@@ -2007,9 +2459,9 @@ namespace JsmMind
         protected override void DrawRows(Graphics g, Rectangle r)
         {
             // render item rows
-            int i; 
+            int i;
             AdjustScrollbars();
-            RenderSubject(centerProject, g, r, 0); 
+            RenderSubject(centerProject, g, r, 0);
             for (i = 0; i < SubjectBase.FloatSubjects.Count; i++)
             {
                 RenderSubject(SubjectBase.FloatSubjects[i], g, r, 0);
@@ -2027,7 +2479,24 @@ namespace JsmMind
 
         protected override void DrawBackground(Graphics g, Rectangle r)
         {
-            base.DrawBackground(g, r);  
+            g.FillRectangle(new SolidBrush(BackColor), r);
+            if (theme == MapTheme.Bubble || theme == MapTheme.Black)
+            { 
+                if (backGroundImg.ContainsKey(theme.ToString()))
+                {
+                    Image img = backGroundImg[theme.ToString()];
+                    int w = img.Width;
+                    int h = img.Height;
+                    for (int i = 0; i < this.Width; i += w)
+                    {
+                        for (int j = 0; j < this.Height; j += h)
+                        {
+                            g.DrawImage(backGroundImg[theme.ToString()], i, j);
+                        }
+                    }
+
+                }
+            }
         }
 
 
@@ -2035,20 +2504,20 @@ namespace JsmMind
         {
             int lb = 0;
             int hb = headerBuffer;
-            int left = r.Left + subjectNode.CenterPoint.X - subjectNode.Width / 2+lb-hscrollBar.Value;
+            int left = r.Left + subjectNode.CenterPoint.X - subjectNode.Width / 2 + lb - hscrollBar.Value;
             int top = r.Left + subjectNode.CenterPoint.Y - subjectNode.Height / 2 + hb - vscrollBar.Value;
             string title = subjectNode.Title;
             Rectangle sr = new Rectangle(left, top, subjectNode.Width, subjectNode.Height);
             //绘制主题绘制区域
             subjectNode.RectAreas = sr;
-             
+
             //绘制所有子主题 
-            if(subjectNode.Expanded)
+            if (subjectNode.Expanded)
             {
                 foreach (SubjectBase childSubject in subjectNode.ChildSubjects)
                 {
                     RenderSubject(childSubject, g, r, level + 1);
-                } 
+                }
             }
 
             //开始绘制
@@ -2068,14 +2537,14 @@ namespace JsmMind
 
             //3.绘制主题内容  
             RenderSubjectTitle(g, r, subjectNode);
-             
-            g.SmoothingMode = SmoothingMode.Default; 
+
+            g.SmoothingMode = SmoothingMode.Default;
         }
 
         private void RenderDragSubject(SubjectBase subjectNode, Graphics g, Rectangle r, int level)
         {
-            SubjectBase nowSubject =selectedSubject;
-            if(nowSubject==null || subjectNode==null) return;
+            SubjectBase nowSubject = selectedSubject;
+            if (nowSubject == null || subjectNode == null) return;
             if (subjectNode.CenterPoint == nowSubject.CenterPoint) return;
             int lb = 0;
             int hb = headerBuffer;
@@ -2083,16 +2552,16 @@ namespace JsmMind
             int top = r.Left + subjectNode.CenterPoint.Y - subjectNode.Height / 2 + hb;
             string title = subjectNode.Title;
             Rectangle sr = new Rectangle(left, top, subjectNode.Width, subjectNode.Height);
-              
+
             //绘制主题绘制区域
             subjectNode.RectAreas = sr;
-              
+
             //开始绘制
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
 
-            if (nowSubject.GetType()== typeof(TitleSubject) && nowSubject.ParentSubject != null && 
-                (Math.Abs(subjectNode.CenterPoint.X-nowSubject.CenterPoint.X) > 400 || Math.Abs(subjectNode.CenterPoint.Y - nowSubject.ParentSubject.CenterPoint.Y) > 300))
+            if (nowSubject.GetType() == typeof(TitleSubject) && nowSubject.ParentSubject != null &&
+                (Math.Abs(subjectNode.CenterPoint.X - nowSubject.CenterPoint.X) > 400 || Math.Abs(subjectNode.CenterPoint.Y - nowSubject.ParentSubject.CenterPoint.Y) > 300))
             {
                 //移除主题
                 nowSubject.DragOut = true;
@@ -2106,7 +2575,7 @@ namespace JsmMind
                     RenderSubjectParentLink(g, r, subjectNode);
                 }
 
-                nowSubject.DragOut = false; 
+                nowSubject.DragOut = false;
             }
 
             //绘制主题内容  
@@ -2137,29 +2606,37 @@ namespace JsmMind
 
             RenderLinkRelate(g, r, subject);
         }
+
+        /// <summary>
+        /// 绘制分支线和折叠按钮
+        /// </summary>
         private void RenderSubjectBranchLink(Graphics g, Rectangle r, SubjectBase subject)
         {
             if (subject.ChildSubjects.Count == 0) return;
+
+            if (theme != MapTheme.Default && subject.GetType() == typeof(CenterSubject)) return;
+
             g.Clip = new System.Drawing.Region(r);
+
 
             //先绘制主题的分支连接线和折叠按钮，再绘制主题内容显示最前  
             int x1 = 0;
-            int y1 = 0; 
+            int y1 = 0;
             int x2 = 0;
             int y2 = 0;
-            if(ViewModel== MapViewModel.ExpandTwoSides)
+            if (ViewModel == MapViewModel.ExpandTwoSides)
             {
                 bool bDrawRight = false;
                 bool bDrawLeft = false;
-                if(subject.GetType()== typeof(CenterSubject))
+                if (subject.GetType() == typeof(CenterSubject))
                 {
-                    foreach(SubjectBase childSubject in  subject.ChildSubjects)
+                    foreach (SubjectBase childSubject in subject.ChildSubjects)
                     {
-                        if(childSubject.Direction==1)
+                        if (childSubject.Direction == 1)
                         {
                             bDrawRight = true;
                         }
-                        if(childSubject.Direction==-1)
+                        if (childSubject.Direction == -1)
                         {
                             bDrawLeft = true;
                         }
@@ -2182,7 +2659,7 @@ namespace JsmMind
 
                     RendrBranchLink(g, r, subject, x1, y1, x2, y2);
                 }
-                if(bDrawLeft)
+                if (bDrawLeft)
                 {
                     x1 = subject.RectAreas.Left;
                     y1 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
@@ -2196,7 +2673,7 @@ namespace JsmMind
             }
 
             if (ViewModel == MapViewModel.ExpandRightSide)
-            { 
+            {
                 x1 = subject.RectAreas.Left + subject.RectAreas.Width;
                 y1 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
 
@@ -2205,15 +2682,15 @@ namespace JsmMind
             }
             else if (ViewModel == MapViewModel.TreeMap)
             {
-                x1 = subject.RectAreas.Left + subject.BranchLinkWidth/2;
+                x1 = subject.RectAreas.Left + subject.BranchLinkWidth / 2;
                 y1 = subject.RectAreas.Top + subject.RectAreas.Height;
 
                 x2 = x1;
                 y2 = y1 + subject.BranchLinkWidth;
-            } 
-            else if(ViewModel== MapViewModel.Structure)
+            }
+            else if (ViewModel == MapViewModel.Structure)
             {
-                if(subject.Level==0)
+                if (subject.Level == 0)
                 {
                     x1 = subject.RectAreas.Left + subject.Width / 2;
                     y1 = subject.RectAreas.Top + subject.RectAreas.Height;
@@ -2233,7 +2710,7 @@ namespace JsmMind
             RendrBranchLink(g, r, subject, x1, y1, x2, y2);
         }
 
-        private void RendrBranchLink(Graphics g, Rectangle r, SubjectBase subject,int x1,int y1,int x2,int y2)
+        private void RendrBranchLink(Graphics g, Rectangle r, SubjectBase subject, int x1, int y1, int x2, int y2)
         {
             Color penColor = subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor;
             Pen penLine = new Pen(penColor, 1.0f);
@@ -2279,7 +2756,7 @@ namespace JsmMind
                 //绘制扩展
                 RenderPlus(g, activeArea, subject);
 
-                //绘制边框和背景
+                //绘制边框和背景   
                 FillRoundRectangle(g, new SolidBrush(subject.SelectColor), activeArea, radius);
                 g.FillRectangle(Brushes.White, sr.Left - 1, sr.Top - 1, sr.Width + 2, sr.Height + 2);
 
@@ -2287,20 +2764,28 @@ namespace JsmMind
             else if (activeSubject == subject) //绘制选中边框
             {
                 Rectangle activeArea = new Rectangle(sr.Left - (int)(3 * SubjectBase.zoomValue), sr.Top - (int)(6 * SubjectBase.zoomValue), sr.Width + (int)(7 * SubjectBase.zoomValue), sr.Height + (int)(10 * SubjectBase.zoomValue));
-                 
+
                 FillRoundRectangle(g, new SolidBrush(subject.ActiveColor), activeArea, radius);
                 g.FillRectangle(Brushes.White, sr.Left - 1, sr.Top - 1, sr.Width + 2, sr.Height + 2);
             }
 
-            if(subject.GetType()== typeof(AttachSubject))
+            if (subject.GetType() == typeof(AttachSubject))
             {
                 FillAttachRectangle(g, new SolidBrush(subject.BackColor), sr, radius);
                 DrawAttachRectangle(g, p, sr, radius);
             }
             else
             {
-                FillRoundRectangle(g, new SolidBrush(subject.BackColor), sr, radius);
-                DrawRoundRectangle(g, p, sr, radius);
+                if (theme == MapTheme.Bubble && subject.GetType() == typeof(CenterSubject))
+                {
+                    g.FillEllipse(new SolidBrush(subject.BackColor), sr);
+                    g.DrawEllipse(p, sr);
+                }
+                else
+                {
+                    FillRoundRectangle(g, new SolidBrush(subject.BackColor), sr, radius);
+                    DrawRoundRectangle(g, p, sr, radius);
+                }
             }
 
             //绘制图像
@@ -2317,20 +2802,20 @@ namespace JsmMind
             //绘制文本
             float x_title = (float)(sr.Left + sr.Width / 2 - size.Width / 2); //居中绘制
             float y_title = (float)(sr.Top + sr.Height / 2 - Math.Floor(size.Height) / 2 + 1);
-            if (lb != subject.MarginWidth) 
+            if (lb != subject.MarginWidth)
             {
                 x_title = (float)(sr.Left + lb);//在图标后绘制
             }
 
             g.DrawString(title, f, new SolidBrush(subject.ForeColor), x_title, y_title);
             Rectangle srTitle = new Rectangle((int)x_title, (int)y_title, (int)size.Width, (int)size.Height);
-            subject.RectTitle = srTitle; 
+            subject.RectTitle = srTitle;
         }
 
-        private void RenderLinkBranch(Graphics g, Rectangle r,SubjectBase subject)
+        private void RenderLinkBranch(Graphics g, Rectangle r, SubjectBase subject)
         {
             Pen penLine = new Pen(subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor, 1.0f);
-            SubjectBase parentSubject = subject.ParentSubject; 
+            SubjectBase parentSubject = subject.ParentSubject;
             int branchLinkWidth = parentSubject.BranchLinkWidth;
 
 
@@ -2339,9 +2824,9 @@ namespace JsmMind
             int y1 = 0;
             //子主体连接线起始点
             int x2 = 0;
-            int y2 = 0;  
+            int y2 = 0;
 
-            if(ViewModel== MapViewModel.ExpandTwoSides)
+            if (ViewModel == MapViewModel.ExpandTwoSides)
             {
                 if (subject.Direction == 1)
                 {
@@ -2376,51 +2861,57 @@ namespace JsmMind
             else if (ViewModel == MapViewModel.TreeMap)
             {
                 //父主题分支连接点
-                x1 = parentSubject.RectAreas.Left + branchLinkWidth/2;
-                y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height +branchLinkWidth;
+                x1 = parentSubject.RectAreas.Left + branchLinkWidth / 2;
+                y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height + branchLinkWidth;
                 //子主体连接线起始点
                 x2 = subject.RectAreas.Left;
-                y2 = subject.RectAreas.Top + subject.RectAreas.Height / 2; 
+                y2 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
             }
-            else if(ViewModel== MapViewModel.Structure)
+            else if (ViewModel == MapViewModel.Structure)
             {
-                if(parentSubject.Level==0)
-                { 
+                if (parentSubject.Level == 0)
+                {
                     //父主题分支连接点
                     x1 = parentSubject.RectAreas.Left + parentSubject.Width / 2;
                     y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height + branchLinkWidth;
                     //子主体连接线起始点
-                    x2 = subject.RectAreas.Left+subject.Width/2;
-                    y2 = subject.RectAreas.Top; 
+                    x2 = subject.RectAreas.Left + subject.Width / 2;
+                    y2 = subject.RectAreas.Top;
 
                 }
                 else
-                { 
+                {
                     //父主题分支连接点
                     x1 = parentSubject.RectAreas.Left + branchLinkWidth / 2;
                     y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height + branchLinkWidth;
                     //子主体连接线起始点
                     x2 = subject.RectAreas.Left;
-                    y2 = subject.RectAreas.Top + subject.RectAreas.Height / 2; 
+                    y2 = subject.RectAreas.Top + subject.RectAreas.Height / 2;
 
                 }
             }
-                 
-             
+            //应用主题样式
+            if (theme != MapTheme.Default && parentSubject.GetType() == typeof(CenterSubject))
+            {
+                //父主题分支连接点
+                x1 = parentSubject.RectAreas.Left + parentSubject.RectAreas.Width / 2;
+                y1 = parentSubject.RectAreas.Top + parentSubject.RectAreas.Height / 2;
+            }
+
             if (x1 == x2 || y1 == y2)
             {
                 g.DrawLine(penLine, x1, y1, x2, y2);
                 return;
-            } 
+            }
             Rectangle rect = new Rectangle(x1, y1, x2 - x1, y2 - y1);
             //直线绘制方向(0,1,2,3分别表示以矩形左上角开始从哪一个点绘制
             int direction = 0;
-            if(x1<x2)
+            if (x1 < x2)
             {
-                if(y1<y2)
-                { 
+                if (y1 < y2)
+                {
                     rect = new Rectangle(x1, y1, x2 - x1, y2 - y1);
-                    direction=2;
+                    direction = 2;
                 }
                 else
                 {
@@ -2430,28 +2921,28 @@ namespace JsmMind
             }
             else
             {
-                if (y1<y2)
+                if (y1 < y2)
                 {
                     rect = new Rectangle(x2, y1, -(x2 - x1), y2 - y1);
                     direction = 1;
                 }
                 else
-                { 
+                {
                     rect = new Rectangle(x2, y2, -(x2 - x1), -(y2 - y1));
                     direction = 0;
                 }
 
             }
 
-            if(ViewModel== MapViewModel.ExpandTwoSides)
-            { 
+            if (ViewModel == MapViewModel.ExpandTwoSides)
+            {
             }
             else if (ViewModel == MapViewModel.ExpandRightSide)
-            { 
+            {
             }
             else if (ViewModel == MapViewModel.TreeMap)
             {
-                 
+
             }
             else if (ViewModel == MapViewModel.Structure)
             {
@@ -2468,10 +2959,23 @@ namespace JsmMind
                 }
             }
 
-            int roration = rect.Height / 4;
-            if (roration > 16) roration = 16;
-            if (roration < 4) roration = 4;
-            DrawRoundLine(g, penLine, rect, roration, direction);
+
+            if (parentSubject.LineStyle == MapLinkStyle.RoundLine)
+            {
+                int roration = rect.Height / 4;
+                if (roration > 16) roration = 16;
+                if (roration < 4) roration = 4;
+                DrawRoundLine(g, penLine, rect, roration, direction);
+            }
+            else if (parentSubject.LineStyle == MapLinkStyle.RectLine)
+            {
+                DrawRectLine(g, penLine, rect, direction);
+            }
+            else if (parentSubject.LineStyle == MapLinkStyle.Curve)
+            {
+                DrawCurveLine(g, penLine, rect, 3, direction);
+            }
+
         }
         private void RenderLinkRelate(Graphics g, Rectangle r, SubjectBase subject)
         {
@@ -2501,7 +3005,7 @@ namespace JsmMind
             int yb = 0;
 
             int xc = 0;
-            int yc = 0; 
+            int yc = 0;
 
             if (x1 < x2)
             {
@@ -2556,9 +3060,9 @@ namespace JsmMind
             g.DrawLines(penLine, curvePoints.ToArray());
         }
         private void RenderLinkAttach(Graphics g, Rectangle r, SubjectBase subject)
-        { 
+        {
             Pen penLine = new Pen(subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor, 1.0f);
-            SubjectBase relateSubject =subject.RelateSubject;
+            SubjectBase relateSubject = subject.RelateSubject;
             //管理主题中心点
             int x1 = relateSubject.CenterPoint.X;
             int y1 = relateSubject.CenterPoint.Y;
@@ -2578,10 +3082,10 @@ namespace JsmMind
                 if (y1 < y2)
                 {
                     xa = x1;
-                    ya = y1 + relateSubject.Height/2+2;
+                    ya = y1 + relateSubject.Height / 2 + 2;
 
-                    xb = x2-5;
-                    yb = y2-subject.Height/2;
+                    xb = x2 - 5;
+                    yb = y2 - subject.Height / 2;
 
                     xc = xb + 10;
                     yc = yb;
@@ -2589,10 +3093,10 @@ namespace JsmMind
                 else
                 {
                     xa = x1;
-                    ya = y1-relateSubject.Height/2;
+                    ya = y1 - relateSubject.Height / 2;
 
-                    xb = x2-5;
-                    yb = y2+subject.Height/2;
+                    xb = x2 - 5;
+                    yb = y2 + subject.Height / 2;
 
                     xc = xb + 10;
                     yc = yb;
@@ -2603,10 +3107,10 @@ namespace JsmMind
                 if (y1 < y2)
                 {
                     xa = x1;
-                    ya = y1+relateSubject.Height/2+2;
+                    ya = y1 + relateSubject.Height / 2 + 2;
 
-                    xb = x2+5;
-                    yb = y2 - subject.Height/2;
+                    xb = x2 + 5;
+                    yb = y2 - subject.Height / 2;
 
 
                     xc = xb - 10;
@@ -2615,16 +3119,16 @@ namespace JsmMind
                 else
                 {
                     xa = x1;
-                    ya = y1-relateSubject.Height/2;
+                    ya = y1 - relateSubject.Height / 2;
 
-                    xb = x2+5;
-                    yb = y2 +subject.Height/2;
+                    xb = x2 + 5;
+                    yb = y2 + subject.Height / 2;
 
                     xc = xb - 10;
                     yc = yb;
                 }
 
-            } 
+            }
             //g.DrawLine(penLine, xa, ya, xb, yb);
 
 
@@ -2636,30 +3140,30 @@ namespace JsmMind
         }
 
         private void RenderPlus(Graphics g, Rectangle area, SubjectBase subject)
-        { 
+        {
             Rectangle sr = new Rectangle(area.Left - (int)(10 * SubjectBase.zoomValue), area.Top - (int)(10 * SubjectBase.zoomValue), area.Width + (int)(20 * SubjectBase.zoomValue), area.Height + (int)(20 * SubjectBase.zoomValue));
             g.Clip = new Region(sr);
 
             Pen penPlus = new Pen(new SolidBrush(Color.White), 2.0f);
             int[] plus = subject.GetPlusVisible();
 
-            if(plus[0]==1)
+            if (plus[0] == 1)
             {
                 //绘制左边Plus
                 Rectangle pmLeft = new Rectangle(area.Left - (int)(8 * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
                 subject.RectPlusLeft = new Rectangle(pmLeft.Left, pmLeft.Top, pmLeft.Width / 2, pmLeft.Height);
                 g.Clip = new Region(subject.RectPlusLeft);  //防止超出边界  
-                RenderPlusLeft(g, pmLeft, penPlus, selectPlus == 1 ? Color.LightSteelBlue : Color.SteelBlue); 
+                RenderPlusLeft(g, pmLeft, penPlus, selectPlus == 1 ? Color.LightSteelBlue : Color.SteelBlue);
             }
-            if(plus[2]==1)
+            if (plus[2] == 1)
             {
                 //绘制右边边Plus
                 Rectangle pmRight = new Rectangle(area.Left + area.Width - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
                 subject.RectPlusRight = new Rectangle(pmRight.Left + pmRight.Width / 2, pmRight.Top, pmRight.Width / 2, pmRight.Height);
                 g.Clip = new Region(subject.RectPlusRight);  //防止超出边界           
-                RenderPlusRight(g, pmRight, penPlus, selectPlus == 3 ? Color.LightSteelBlue : Color.SteelBlue); 
+                RenderPlusRight(g, pmRight, penPlus, selectPlus == 3 ? Color.LightSteelBlue : Color.SteelBlue);
             }
-            if(plus[1]==1)
+            if (plus[1] == 1)
             {
                 //绘制上边Plus
 
@@ -2669,7 +3173,7 @@ namespace JsmMind
                 g.Clip = new Region(subject.RectPlusTop);  //防止超出边界
                 RenderPlusTop(g, pmTop, penPlus, selectPlus == 2 ? Color.LightSteelBlue : Color.SteelBlue);
             }
-            if(plus[3]==1)
+            if (plus[3] == 1)
             {
                 //绘制下边Plus
                 Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - (int)(10 * SubjectBase.zoomValue), area.Top + area.Height - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue));
@@ -2677,7 +3181,7 @@ namespace JsmMind
 
                 g.Clip = new Region(subject.RectPlusBottom);  //防止超出边界
                 RenderPlusBottom(g, pmBottom, penPlus, selectPlus == 4 ? Color.LightSteelBlue : Color.SteelBlue);
-            }      
+            }
 
             g.Clip = new Region(sr);
 
@@ -2694,21 +3198,21 @@ namespace JsmMind
         {
             g.FillEllipse(new SolidBrush(backColr), pmRight);
             g.DrawLine(penPlus, pmRight.Right - (int)(8 * SubjectBase.zoomValue), pmRight.Top + pmRight.Height / 2, pmRight.Right - (int)(2 * SubjectBase.zoomValue), pmRight.Top + pmRight.Height / 2);
-            g.DrawLine(penPlus, pmRight.Right - (int)(5 * SubjectBase.zoomValue), pmRight.Top + pmRight.Height / 2 - (int)(3 * SubjectBase.zoomValue), pmRight.Right - (int)(5 * SubjectBase.zoomValue), pmRight.Top + pmRight.Height / 2 + (int)(3 * SubjectBase.zoomValue)); 
+            g.DrawLine(penPlus, pmRight.Right - (int)(5 * SubjectBase.zoomValue), pmRight.Top + pmRight.Height / 2 - (int)(3 * SubjectBase.zoomValue), pmRight.Right - (int)(5 * SubjectBase.zoomValue), pmRight.Top + pmRight.Height / 2 + (int)(3 * SubjectBase.zoomValue));
         }
 
         private void RenderPlusTop(Graphics g, Rectangle pmTop, Pen penPlus, Color backColr)
         {
             g.FillEllipse(new SolidBrush(backColr), pmTop);
             g.DrawLine(penPlus, pmTop.Left + (int)(7 * SubjectBase.zoomValue), pmTop.Top + (int)(5 * SubjectBase.zoomValue), pmTop.Left + (int)(13 * SubjectBase.zoomValue), pmTop.Top + (int)(5 * SubjectBase.zoomValue));
-            g.DrawLine(penPlus, pmTop.Left + (int)(10 * SubjectBase.zoomValue), pmTop.Top + (int)(2 * SubjectBase.zoomValue), pmTop.Left + (int)(10 * SubjectBase.zoomValue), pmTop.Top + (int)(8 * SubjectBase.zoomValue)); 
+            g.DrawLine(penPlus, pmTop.Left + (int)(10 * SubjectBase.zoomValue), pmTop.Top + (int)(2 * SubjectBase.zoomValue), pmTop.Left + (int)(10 * SubjectBase.zoomValue), pmTop.Top + (int)(8 * SubjectBase.zoomValue));
         }
 
         private void RenderPlusBottom(Graphics g, Rectangle pmBottom, Pen penPlus, Color backColr)
         {
             g.FillEllipse(new SolidBrush(backColr), pmBottom);
             g.DrawLine(penPlus, pmBottom.Left + (int)(7 * SubjectBase.zoomValue), pmBottom.Bottom - (int)(5 * SubjectBase.zoomValue), pmBottom.Left + (int)(13 * SubjectBase.zoomValue), pmBottom.Bottom - (int)(5 * SubjectBase.zoomValue));
-            g.DrawLine(penPlus, pmBottom.Left + (int)(10 * SubjectBase.zoomValue), pmBottom.Bottom - (int)(2 * SubjectBase.zoomValue), pmBottom.Left + (int)(10 * SubjectBase.zoomValue), pmBottom.Bottom - (int)(8 * SubjectBase.zoomValue)); 
+            g.DrawLine(penPlus, pmBottom.Left + (int)(10 * SubjectBase.zoomValue), pmBottom.Bottom - (int)(2 * SubjectBase.zoomValue), pmBottom.Left + (int)(10 * SubjectBase.zoomValue), pmBottom.Bottom - (int)(8 * SubjectBase.zoomValue));
         }
 
         private void DrawAttachRectangle(Graphics g, Pen pen, Rectangle rect, int cornerRadius)
@@ -2720,19 +3224,19 @@ namespace JsmMind
 
                 Rectangle rectEdge = new Rectangle(rect.Right - edge, rect.Top, edge, edge);
                 //绘制附注主题的折叠区域
-                g.FillRectangle(Brushes.White,rectEdge.Left,rectEdge.Top-1,rectEdge.Width+1,rectEdge.Height);
+                g.FillRectangle(Brushes.White, rectEdge.Left, rectEdge.Top - 1, rectEdge.Width + 1, rectEdge.Height);
 
                 g.DrawLine(pen, rectEdge.Left, rectEdge.Top, rectEdge.Left, rectEdge.Bottom);
                 g.DrawLine(pen, rectEdge.Left, rectEdge.Top, rectEdge.Right, rectEdge.Bottom);
-                g.DrawLine(pen, rectEdge.Left, rectEdge.Bottom, rectEdge.Right, rectEdge.Bottom);  
+                g.DrawLine(pen, rectEdge.Left, rectEdge.Bottom, rectEdge.Right, rectEdge.Bottom);
             }
         }
 
         private void FillAttachRectangle(Graphics g, Brush brush, Rectangle rect, int cornerRadius)
         {
-            using (GraphicsPath path = CreateRoundedRectanglePath(rect, cornerRadius/2))
+            using (GraphicsPath path = CreateRoundedRectanglePath(rect, cornerRadius / 2))
             {
-                g.FillPath(brush, path); 
+                g.FillPath(brush, path);
             }
         }
 
@@ -2752,7 +3256,7 @@ namespace JsmMind
             }
         }
         private GraphicsPath CreateRoundedRectanglePath(Rectangle rect, int cornerRadius)
-        { 
+        {
             GraphicsPath roundedRect = new GraphicsPath();
 
             if (cornerRadius < 2)
@@ -2775,50 +3279,50 @@ namespace JsmMind
             roundedRect.CloseFigure();
             return roundedRect;
         }
-         
+
         /// <summary>
-        /// 绘制弧形
+        /// 绘制圆角线
         /// </summary>
         /// <param name="g"></param>
         /// <param name="pen"></param>
         /// <param name="rect"></param>
         /// <param name="cornerRadius">圆角半径</param>
         /// <param name="direction">直线绘制方向(0,1,2,3分别表示以矩形左上角开始从哪一个点绘制)</param>
-        private void DrawRoundLine(Graphics g, Pen pen, Rectangle rect, int cornerRadius,int direction)
+        private void DrawRoundLine(Graphics g, Pen pen, Rectangle rect, int cornerRadius, int direction)
         {
-            using (GraphicsPath path = CreateRoundedLinePath(rect, cornerRadius,direction))
+            using (GraphicsPath path = CreateRoundedLinePath(rect, cornerRadius, direction))
             {
                 g.DrawPath(pen, path);
             }
         }
-        private GraphicsPath CreateRoundedLinePath(Rectangle rect, int cornerRadius,int direction)
+        private GraphicsPath CreateRoundedLinePath(Rectangle rect, int cornerRadius, int direction)
         {
             GraphicsPath roundedRect = new GraphicsPath();
-            if(direction==0)
-            { 
+            if (direction == 0)
+            {
                 roundedRect.AddLine(rect.X, rect.Y, rect.Right - cornerRadius * 2, rect.Y);
                 roundedRect.AddArc(rect.X + rect.Width - cornerRadius * 2, rect.Y, cornerRadius * 2, cornerRadius * 2, 270, 90);
                 roundedRect.AddLine(rect.Right, rect.Y + cornerRadius * 2, rect.Right, rect.Y + rect.Height);
 
-            } 
-            else if( direction==1)
-            {
-                roundedRect.AddLine(rect.Right, rect.Y , rect.Right, rect.Y + rect.Height - cornerRadius * 2);
-                roundedRect.AddArc(rect.X + rect.Width - cornerRadius * 2, rect.Y + rect.Height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2, 0, 90);
-                roundedRect.AddLine(rect.X, rect.Bottom, rect.Right- cornerRadius * 2, rect.Bottom);
-                
             }
-            else if(direction==2)
+            else if (direction == 1)
+            {
+                roundedRect.AddLine(rect.Right, rect.Y, rect.Right, rect.Y + rect.Height - cornerRadius * 2);
+                roundedRect.AddArc(rect.X + rect.Width - cornerRadius * 2, rect.Y + rect.Height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2, 0, 90);
+                roundedRect.AddLine(rect.X, rect.Bottom, rect.Right - cornerRadius * 2, rect.Bottom);
+
+            }
+            else if (direction == 2)
             {
                 roundedRect.AddLine(rect.Right, rect.Bottom, rect.X + cornerRadius * 2, rect.Bottom);
                 roundedRect.AddArc(rect.X, rect.Bottom - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2, 90, 90);
-                roundedRect.AddLine(rect.X, rect.Bottom - cornerRadius * 2, rect.X, rect.Y); 
+                roundedRect.AddLine(rect.X, rect.Bottom - cornerRadius * 2, rect.X, rect.Y);
             }
-            else if(direction==3)
+            else if (direction == 3)
             {
-                roundedRect.AddLine(rect.X, rect.Bottom , rect.X, rect.Y + cornerRadius * 2);
+                roundedRect.AddLine(rect.X, rect.Bottom, rect.X, rect.Y + cornerRadius * 2);
                 roundedRect.AddArc(rect.X, rect.Y, cornerRadius * 2, cornerRadius * 2, 180, 90);
-                roundedRect.AddLine(rect.X + cornerRadius, rect.Y, rect.Right, rect.Y); 
+                roundedRect.AddLine(rect.X + cornerRadius, rect.Y, rect.Right, rect.Y);
             }
             else
             {
@@ -2832,22 +3336,104 @@ namespace JsmMind
                 roundedRect.AddLine(rect.X, rect.Bottom - cornerRadius * 2, rect.X, rect.Y + cornerRadius * 2);
 
             }
-           
+
             //roundedRect.CloseFigure();
             return roundedRect;
         }
+        /// <summary>
+        /// 绘制矩形线
+        /// </summary>
+        /// <param name="g"></param>
+        /// <param name="pen"></param>
+        /// <param name="rect"></param>
+        /// <param name="cornerRadius"></param>
+        /// <param name="direction">绘制方向(0,1,2,3分别表示以矩形左上角开始从哪一个点绘制)</param>
+        private void DrawRectLine(Graphics g, Pen pen, Rectangle rect, int direction)
+        {
+            if (direction == 3)
+            {
+                Point pt1 = new Point(rect.Left, rect.Bottom);
+                Point pt2 = new Point(rect.Left, rect.Top);
+                Point pt3 = new Point(rect.Right, rect.Top);
+                g.DrawLines(pen, new Point[] { pt1, pt2, pt3 });
+            }
+            else if (direction == 2)
+            {
+                Point pt1 = new Point(rect.Left, rect.Top);
+                Point pt2 = new Point(rect.Left, rect.Bottom);
+                Point pt3 = new Point(rect.Right, rect.Bottom);
+                g.DrawLines(pen, new Point[] { pt1, pt2, pt3 });
+            }
+            else if (direction == 1)
+            {
+                Point pt1 = new Point(rect.Left, rect.Bottom);
+                Point pt2 = new Point(rect.Right, rect.Bottom);
+                Point pt3 = new Point(rect.Right, rect.Top);
+                g.DrawLines(pen, new Point[] { pt1, pt2, pt3 });
+            }
+            else if (direction == 0)
+            {
+                Point pt1 = new Point(rect.Left, rect.Top);
+                Point pt2 = new Point(rect.Right, rect.Top);
+                Point pt3 = new Point(rect.Right, rect.Bottom);
+                g.DrawLines(pen, new Point[] { pt1, pt2, pt3 });
+            }
+        }
 
-       
-		#endregion
-        
+        /// <summary>
+        /// 绘制弧线
+        /// </summary>
+        /// <param name="g"></param>
+        /// <param name="pen"></param>
+        /// <param name="rect"></param>
+        /// <param name="cornerRadius">弧线半径</param>
+        /// <param name="direction">绘制方向(0,1,2,3分别表示以矩形左上角开始从哪一个点绘制)</param>
+        private void DrawCurveLine(Graphics g, Pen pen, Rectangle rect, int cornerRadius, int direction)
+        {
+            if (direction == 3)
+            {
+                Point pt1 = new Point(rect.Left, rect.Bottom);
+                Point pt2 = new Point(rect.Left, rect.Bottom - rect.Height / 3);
+                Point pt3 = new Point(rect.Left + rect.Width / 3, rect.Top);
+                Point pt4 = new Point(rect.Right, rect.Top);
+                g.DrawBezier(pen, pt1, pt2, pt3, pt4);
+            }
+            else if (direction == 2)
+            {
+                Point pt1 = new Point(rect.Left, rect.Top);
+                Point pt2 = new Point(rect.Left, rect.Top + rect.Height / 3);
+                Point pt3 = new Point(rect.Left + rect.Width / 3, rect.Bottom);
+                Point pt4 = new Point(rect.Right, rect.Bottom);
+                g.DrawBezier(pen, pt1, pt2, pt3, pt4);
+            }
+            else if (direction == 1)
+            {
+                Point pt1 = new Point(rect.Left, rect.Bottom);
+                Point pt2 = new Point(rect.Right - rect.Width / 3, rect.Bottom);
+                Point pt3 = new Point(rect.Right, rect.Top + rect.Height / 3);
+                Point pt4 = new Point(rect.Right, rect.Top);
+                g.DrawBezier(pen, pt1, pt2, pt3, pt4);
+            }
+            else if (direction == 0)
+            {
+                Point pt1 = new Point(rect.Left, rect.Top);
+                Point pt2 = new Point(rect.Right - rect.Width / 3, rect.Top);
+                Point pt3 = new Point(rect.Right, rect.Bottom - rect.Height / 3);
+                Point pt4 = new Point(rect.Right, rect.Bottom);
+                g.DrawBezier(pen, pt1, pt2, pt3, pt4);
+            }
+        }
 
-        #region TextBoxEdit 
+        #endregion
+
+
+        #region TextBoxEdit
         void txtNode_Leave(object sender, EventArgs e)
-        { 
+        {
         }
         void txtNode_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter || e.KeyCode== Keys.Escape)
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Escape)
             {
                 HideTxtBox();
                 return;
@@ -2892,7 +3478,7 @@ namespace JsmMind
         }
 
         void timerTxt_Tick(object sender, EventArgs e)
-        { 
+        {
             timerTxt.Enabled = false;
             ShowTxtBox();
         }
@@ -2905,7 +3491,7 @@ namespace JsmMind
 
             txtNode.AccessibleDescription = "Save";
             txtNode.Text = subject.Title;
-            int left = r.Left+3;
+            int left = r.Left + 3;
             int top = r.Top < headerBuffer ? headerBuffer : r.Top;
             int height = r.Height - (r.Top < headerBuffer ? headerBuffer - r.Top : 0);
             txtNode.Location = new Point(left, top);
@@ -2919,7 +3505,7 @@ namespace JsmMind
             txtNode.Parent = this;
             txtNode.Select(txtNode.Text.Length, 0);
             txtNode.Visible = true;
-            txtNode.Focus(); 
+            txtNode.Focus();
         }
         private void HideTxtBox()
         {
@@ -2943,8 +3529,8 @@ namespace JsmMind
 
         }
         #endregion
-         
-		#region Helper Functions
+
+        #region Helper Functions
 
         private int vsize, hsize;
         public override void AdjustScrollbars()
@@ -2992,7 +3578,7 @@ namespace JsmMind
 
         private int GetSubjectMaxWidth(SubjectBase subject)
         {
-            int maxWidth =  GetSubjectMaxWidth(subject, 0);
+            int maxWidth = GetSubjectMaxWidth(subject, 0);
 
             foreach (SubjectBase n in SubjectBase.FloatSubjects)
             {
@@ -3004,11 +3590,11 @@ namespace JsmMind
             }
             return maxWidth;
         }
-        private int GetSubjectMaxWidth(SubjectBase subject,int max)
-        { 
-            int maxWidth=max;
-            if(subject.Expanded)
-            { 
+        private int GetSubjectMaxWidth(SubjectBase subject, int max)
+        {
+            int maxWidth = max;
+            if (subject.Expanded)
+            {
                 foreach (SubjectBase n in subject.ChildSubjects)
                 {
                     if (n.Expanded)
@@ -3030,10 +3616,10 @@ namespace JsmMind
             return maxWidth;
         }
 
-        
+
         private int GetSubjectMaxHeight(SubjectBase subject)
         {
-            int maxHeight= GetSubjectMaxHeight(subject, 0);
+            int maxHeight = GetSubjectMaxHeight(subject, 0);
 
             foreach (SubjectBase n in SubjectBase.FloatSubjects)
             {
@@ -3041,7 +3627,7 @@ namespace JsmMind
                 if (m > maxHeight)
                 {
                     maxHeight = m;
-                } 
+                }
             }
             return maxHeight;
         }
@@ -3069,7 +3655,7 @@ namespace JsmMind
                 maxHeight = subject.CenterPoint.Y + subject.Height / 2;
             }
             return maxHeight;
-        } 
+        }
         private int GetChildSubjectCount(SubjectBase node)
         {
             int rs = 0;
@@ -3083,7 +3669,7 @@ namespace JsmMind
             }
             return rs;
         }
-   
+
         private bool SubjectInCenterArea(MouseEventArgs e)
         {
             SubjectBase taskEvent = centerProject;
@@ -3098,7 +3684,7 @@ namespace JsmMind
         private SubjectBase SubjectInArea(MouseEventArgs e)
         {
             foreach (SubjectBase taskEvent in subjectNodes)
-            {  
+            {
                 Rectangle r = taskEvent.RectAreas;
                 if (r.Left <= e.X && r.Left + r.Width >= e.X
                         && r.Top <= e.Y && r.Top + r.Height >= e.Y)
@@ -3134,40 +3720,39 @@ namespace JsmMind
             return false;
         }
 
-        private int PlusInArea(MouseEventArgs e,SubjectBase taskEvent)
+        private int PlusInArea(MouseEventArgs e, SubjectBase taskEvent)
         {
             selectPlus = 0;
             Rectangle r = taskEvent.RectPlusLeft;
             if (r.Left <= e.X && r.Left + r.Width >= e.X
                     && r.Top <= e.Y && r.Top + r.Height >= e.Y)
             {
-                selectPlus = 1; 
+                selectPlus = 1;
             }
             r = taskEvent.RectPlusTop;
             if (r.Left <= e.X && r.Left + r.Width >= e.X
                     && r.Top <= e.Y && r.Top + r.Height >= e.Y)
             {
-                selectPlus = 2; 
+                selectPlus = 2;
             }
             r = taskEvent.RectPlusRight;
             if (r.Left <= e.X && r.Left + r.Width >= e.X
                     && r.Top <= e.Y && r.Top + r.Height >= e.Y)
             {
-                selectPlus = 3; 
+                selectPlus = 3;
             }
             r = taskEvent.RectPlusBottom;
             if (r.Left <= e.X && r.Left + r.Width >= e.X
                     && r.Top <= e.Y && r.Top + r.Height >= e.Y)
             {
-                selectPlus = 4; 
+                selectPlus = 4;
             }
             return selectPlus;
         }
-	 
 
-        #endregion  
-         
-	}
-	#endregion
-     
+
+        #endregion
+
+    }
+    #endregion
 }

@@ -24,8 +24,10 @@ namespace WindowsFormsApplication1
 
             this.richTextBox1.TextChanged += richTextBox1_TextChanged;
 
-            this.splitContainer1.Panel2Collapsed = true; 
-
+            this.splitContainer1.Panel2Collapsed = true;
+            this.mindMap.BackgroundImg.Add(MapTheme.Bubble.ToString(), panelBubble.BackgroundImage);
+            this.mindMap.BackgroundImg.Add(MapTheme.Black.ToString(), panelBlack.BackgroundImage);
+             
         }
 
         void richTextBox1_TextChanged(object sender, EventArgs e)
@@ -124,6 +126,31 @@ namespace WindowsFormsApplication1
             float zoom = Convert.ToInt32(cbZoomValue.Text.Substring(0, cbZoomValue.Text.Length - 1)) / 100.0f;
             this.mindMap.ZoomMap(zoom);
 
+        }
+
+        private void toolBtnStyleDefault_Click(object sender, EventArgs e)
+        {
+            this.mindMap.Theme = MapTheme.Default;
+        }
+
+        private void toolBtnStyleClassics_Click(object sender, EventArgs e)
+        { 
+            this.mindMap.Theme = MapTheme.Classics;
+        }
+
+        private void toolBtnStyleBubble_Click(object sender, EventArgs e)
+        { 
+            this.mindMap.Theme = MapTheme.Bubble;
+        }
+
+        private void toolBtnStyleLemo_Click(object sender, EventArgs e)
+        { 
+            this.mindMap.Theme = MapTheme.Lemo;
+        }
+
+        private void toolBtnStyleBlack_Click(object sender, EventArgs e)
+        {
+            this.mindMap.Theme = MapTheme.Black;
         }  
 
     }

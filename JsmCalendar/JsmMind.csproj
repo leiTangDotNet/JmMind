@@ -57,6 +57,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ExtendedListViews\Resources\bubblebg.png" />
     <Content Include="ExtendedListViews\Resources\tv_minus.bmp" />
     <Content Include="ExtendedListViews\Resources\tv_plus.bmp" />
   </ItemGroup>
