@@ -1063,6 +1063,7 @@ namespace JsmMind
         public int Level
         {
             get { return level; }
+            set { level = value; }
         }
 
         public int Direction
@@ -2099,9 +2100,46 @@ namespace JsmMind
                 subject.ZoomValue();
             }
             Invalidate();
+        }
 
+        public void AdjustMapCenter()
+        {
+            int h = this.centerProject.GetTotalHeight();
+            int w = this.centerProject.GetTotalWidth();
+
+            int x = this.Width / 2 - w / 2;
+            int y = this.Height / 2 - h / 2;
+
+            if (x < centerProject.Width) x = centerProject.Width;
+
+            if (y < centerProject.Height) y = centerProject.Height;
+
+            this.centerProject.MoveSubjectPosition(new Point(x, y));
+            Invalidate();
+        }
+
+        public void SaveAs(string fileName)
+        {
+            string xml =XmlManage.SaveSubject(centerProject, SubjectBase.FloatSubjects);
+            byte[] zipBuffer = System.Text.Encoding.UTF8.GetBytes(xml);
+            FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
+            fs.Write(zipBuffer, 0, zipBuffer.Length);
+            fs.Close();
+        }
+
+        public void ReadAs(string fileName)
+        { 
+            FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            byte[] bBuffer = new byte[fs.Length];
+            fs.Read(bBuffer, 0, (int)fs.Length);
+            string xml = System.Text.Encoding.UTF8.GetString(bBuffer);
+
+            SubjectBase subject= XmlManage.ReadSubject(xml);
+            centerProject = subject;
         }
         #endregion
+
         #region Overrides
         public override bool PreProcessMessage(ref Message msg)
         {
@@ -3425,7 +3463,6 @@ namespace JsmMind
         }
 
         #endregion
-
 
         #region TextBoxEdit
         void txtNode_Leave(object sender, EventArgs e)

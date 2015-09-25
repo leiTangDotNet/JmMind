@@ -47,6 +47,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="ExtendedListViews\Helpers\CurveTools.cs" />
+    <Compile Include="ExtendedListViews\Helpers\ImageHelper.cs" />
     <Compile Include="ExtendedListViews\Helpers\StringTools.cs" />
     <Compile Include="ExtendedListViews\HelperTools.cs" />
     <Compile Include="ExtendedListViews\IParentChildList.cs" />
@@ -55,6 +56,7 @@
     </Compile>
     <Compile Include="ExtendedListViews\uxTheme\Wrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ExtendedListViews\XmlManage.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ExtendedListViews\Resources\bubblebg.png" />

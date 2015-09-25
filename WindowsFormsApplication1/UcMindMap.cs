@@ -120,6 +120,10 @@ namespace WindowsFormsApplication1
                 cbZoomValue.SelectedIndex = cbZoomValue.SelectedIndex + 1;
             }
         } 
+        private void btnCenter_Click(object sender, EventArgs e)
+        {
+            this.mindMap.AdjustMapCenter();
+        }  
 
         private void cbZoomValue_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -151,7 +155,36 @@ namespace WindowsFormsApplication1
         private void toolBtnStyleBlack_Click(object sender, EventArgs e)
         {
             this.mindMap.Theme = MapTheme.Black;
-        }  
+        }
+
+        private void toolBtnSave_Click(object sender, EventArgs e)
+        {
+            using(SaveFileDialog sfd=new SaveFileDialog())
+            {
+                sfd.FileName = "NewJmmap.jmmap";
+                sfd.DefaultExt = ".jmmap";
+                if(sfd.ShowDialog()== DialogResult.OK)
+                {
+                    string fileName = sfd.FileName;
+
+                    this.mindMap.SaveAs(fileName);
+                }
+            }
+        }
+
+        private void toolBtnLoad_Click(object sender, EventArgs e)
+        {
+            using(OpenFileDialog ofd=new OpenFileDialog())
+            {
+                if(ofd.ShowDialog()== DialogResult.OK)
+                {
+                    string fileName = ofd.FileName
+;
+                    this.mindMap.ReadAs(fileName);
+                }
+            }
+        }
+
 
     }
 }

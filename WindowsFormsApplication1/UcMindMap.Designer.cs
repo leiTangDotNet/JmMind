@@ -34,8 +34,11 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.panelMap = new System.Windows.Forms.Panel();
             this.panelBottom = new System.Windows.Forms.Panel();
+            this.panelBlack = new System.Windows.Forms.Panel();
+            this.panelBubble = new System.Windows.Forms.Panel();
             this.cbZoomValue = new System.Windows.Forms.ComboBox();
             this.btnZoomIn = new System.Windows.Forms.Button();
+            this.btnCenter = new System.Windows.Forms.Button();
             this.btnZoomOut = new System.Windows.Forms.Button();
             this.panel3 = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -59,6 +62,13 @@
             this.panel4 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
             this.toolStrip2 = new System.Windows.Forms.ToolStrip();
+            this.toolStripSplitButton2 = new System.Windows.Forms.ToolStripSplitButton();
+            this.toolBtnStyleDefault = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolBtnStyleClassics = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolBtnStyleLemo = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolBtnStyleBubble = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolBtnStyleBlack = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
             this.toolBtnAddImage = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             this.toolBtnAttachNote = new System.Windows.Forms.ToolStripButton();
@@ -72,15 +82,9 @@
             this.toolBtnExpandRight = new System.Windows.Forms.ToolStripMenuItem();
             this.tooBtnTreeMap = new System.Windows.Forms.ToolStripMenuItem();
             this.toolBtnStructure = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSplitButton2 = new System.Windows.Forms.ToolStripSplitButton();
-            this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolBtnStyleDefault = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolBtnStyleClassics = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolBtnStyleBubble = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolBtnStyleLemo = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolBtnStyleBlack = new System.Windows.Forms.ToolStripMenuItem();
-            this.panelBubble = new System.Windows.Forms.Panel();
-            this.panelBlack = new System.Windows.Forms.Panel();
+            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolBtnSave = new System.Windows.Forms.ToolStripButton();
+            this.toolBtnLoad = new System.Windows.Forms.ToolStripButton();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -149,6 +153,7 @@
             this.panelBottom.Controls.Add(this.panelBubble);
             this.panelBottom.Controls.Add(this.cbZoomValue);
             this.panelBottom.Controls.Add(this.btnZoomIn);
+            this.panelBottom.Controls.Add(this.btnCenter);
             this.panelBottom.Controls.Add(this.btnZoomOut);
             this.panelBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panelBottom.Location = new System.Drawing.Point(0, 435);
@@ -156,6 +161,26 @@
             this.panelBottom.Size = new System.Drawing.Size(659, 26);
             this.panelBottom.TabIndex = 1;
             this.panelBottom.SizeChanged += new System.EventHandler(this.panelBottom_SizeChanged);
+            // 
+            // panelBlack
+            // 
+            this.panelBlack.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("panelBlack.BackgroundImage")));
+            this.panelBlack.Dock = System.Windows.Forms.DockStyle.Right;
+            this.panelBlack.Location = new System.Drawing.Point(540, 0);
+            this.panelBlack.Name = "panelBlack";
+            this.panelBlack.Size = new System.Drawing.Size(58, 26);
+            this.panelBlack.TabIndex = 0;
+            this.panelBlack.Visible = false;
+            // 
+            // panelBubble
+            // 
+            this.panelBubble.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("panelBubble.BackgroundImage")));
+            this.panelBubble.Dock = System.Windows.Forms.DockStyle.Right;
+            this.panelBubble.Location = new System.Drawing.Point(598, 0);
+            this.panelBubble.Name = "panelBubble";
+            this.panelBubble.Size = new System.Drawing.Size(61, 26);
+            this.panelBubble.TabIndex = 0;
+            this.panelBubble.Visible = false;
             // 
             // cbZoomValue
             // 
@@ -187,6 +212,19 @@
             this.btnZoomIn.TabIndex = 2;
             this.btnZoomIn.UseVisualStyleBackColor = true;
             this.btnZoomIn.Click += new System.EventHandler(this.btnZoomIn_Click);
+            // 
+            // btnCenter
+            // 
+            this.btnCenter.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btnCenter.BackgroundImage")));
+            this.btnCenter.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.btnCenter.FlatAppearance.BorderSize = 0;
+            this.btnCenter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCenter.Location = new System.Drawing.Point(146, 4);
+            this.btnCenter.Name = "btnCenter";
+            this.btnCenter.Size = new System.Drawing.Size(20, 20);
+            this.btnCenter.TabIndex = 2;
+            this.btnCenter.UseVisualStyleBackColor = true;
+            this.btnCenter.Click += new System.EventHandler(this.btnCenter_Click);
             // 
             // btnZoomOut
             // 
@@ -412,12 +450,69 @@
             this.toolStripSeparator6,
             this.toolBtnRelate,
             this.toolStripSeparator7,
-            this.toolStripSplitButton1});
+            this.toolStripSplitButton1,
+            this.toolStripSeparator9,
+            this.toolBtnSave,
+            this.toolBtnLoad});
             this.toolStrip2.Location = new System.Drawing.Point(0, 0);
             this.toolStrip2.Name = "toolStrip2";
             this.toolStrip2.Size = new System.Drawing.Size(927, 25);
             this.toolStrip2.TabIndex = 1;
             this.toolStrip2.Text = "toolStrip2";
+            // 
+            // toolStripSplitButton2
+            // 
+            this.toolStripSplitButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolBtnStyleDefault,
+            this.toolBtnStyleClassics,
+            this.toolBtnStyleLemo,
+            this.toolBtnStyleBubble,
+            this.toolBtnStyleBlack});
+            this.toolStripSplitButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripSplitButton2.Image")));
+            this.toolStripSplitButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripSplitButton2.Name = "toolStripSplitButton2";
+            this.toolStripSplitButton2.Size = new System.Drawing.Size(88, 22);
+            this.toolStripSplitButton2.Text = "导图样式";
+            // 
+            // toolBtnStyleDefault
+            // 
+            this.toolBtnStyleDefault.Name = "toolBtnStyleDefault";
+            this.toolBtnStyleDefault.Size = new System.Drawing.Size(112, 22);
+            this.toolBtnStyleDefault.Text = "默认";
+            this.toolBtnStyleDefault.Click += new System.EventHandler(this.toolBtnStyleDefault_Click);
+            // 
+            // toolBtnStyleClassics
+            // 
+            this.toolBtnStyleClassics.Name = "toolBtnStyleClassics";
+            this.toolBtnStyleClassics.Size = new System.Drawing.Size(112, 22);
+            this.toolBtnStyleClassics.Text = "经典蓝";
+            this.toolBtnStyleClassics.Click += new System.EventHandler(this.toolBtnStyleClassics_Click);
+            // 
+            // toolBtnStyleLemo
+            // 
+            this.toolBtnStyleLemo.Name = "toolBtnStyleLemo";
+            this.toolBtnStyleLemo.Size = new System.Drawing.Size(112, 22);
+            this.toolBtnStyleLemo.Text = "柠檬";
+            this.toolBtnStyleLemo.Click += new System.EventHandler(this.toolBtnStyleLemo_Click);
+            // 
+            // toolBtnStyleBubble
+            // 
+            this.toolBtnStyleBubble.Name = "toolBtnStyleBubble";
+            this.toolBtnStyleBubble.Size = new System.Drawing.Size(112, 22);
+            this.toolBtnStyleBubble.Text = "气泡";
+            this.toolBtnStyleBubble.Click += new System.EventHandler(this.toolBtnStyleBubble_Click);
+            // 
+            // toolBtnStyleBlack
+            // 
+            this.toolBtnStyleBlack.Name = "toolBtnStyleBlack";
+            this.toolBtnStyleBlack.Size = new System.Drawing.Size(112, 22);
+            this.toolBtnStyleBlack.Text = "星空";
+            this.toolBtnStyleBlack.Click += new System.EventHandler(this.toolBtnStyleBlack_Click);
+            // 
+            // toolStripSeparator8
+            // 
+            this.toolStripSeparator8.Name = "toolStripSeparator8";
+            this.toolStripSeparator8.Size = new System.Drawing.Size(6, 25);
             // 
             // toolBtnAddImage
             // 
@@ -491,104 +586,53 @@
             // toolBtnExpandTwoSide
             // 
             this.toolBtnExpandTwoSide.Name = "toolBtnExpandTwoSide";
-            this.toolBtnExpandTwoSide.Size = new System.Drawing.Size(152, 22);
+            this.toolBtnExpandTwoSide.Size = new System.Drawing.Size(136, 22);
             this.toolBtnExpandTwoSide.Text = "扩展导图";
             this.toolBtnExpandTwoSide.Click += new System.EventHandler(this.toolBtnExpandTwoSide_Click);
             // 
             // toolBtnExpandRight
             // 
             this.toolBtnExpandRight.Name = "toolBtnExpandRight";
-            this.toolBtnExpandRight.Size = new System.Drawing.Size(152, 22);
+            this.toolBtnExpandRight.Size = new System.Drawing.Size(136, 22);
             this.toolBtnExpandRight.Text = "向右导图";
             this.toolBtnExpandRight.Click += new System.EventHandler(this.toolBtnExpandRight_Click);
             // 
             // tooBtnTreeMap
             // 
             this.tooBtnTreeMap.Name = "tooBtnTreeMap";
-            this.tooBtnTreeMap.Size = new System.Drawing.Size(152, 22);
+            this.tooBtnTreeMap.Size = new System.Drawing.Size(136, 22);
             this.tooBtnTreeMap.Text = "树状导图";
             this.tooBtnTreeMap.Click += new System.EventHandler(this.tooBtnTreeMap_Click);
             // 
             // toolBtnStructure
             // 
             this.toolBtnStructure.Name = "toolBtnStructure";
-            this.toolBtnStructure.Size = new System.Drawing.Size(152, 22);
+            this.toolBtnStructure.Size = new System.Drawing.Size(136, 22);
             this.toolBtnStructure.Text = "组织结构图";
             this.toolBtnStructure.Click += new System.EventHandler(this.toolBtnStructure_Click);
             // 
-            // toolStripSplitButton2
+            // toolStripSeparator9
             // 
-            this.toolStripSplitButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolBtnStyleDefault,
-            this.toolBtnStyleClassics,
-            this.toolBtnStyleLemo,
-            this.toolBtnStyleBubble,
-            this.toolBtnStyleBlack});
-            this.toolStripSplitButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripSplitButton2.Image")));
-            this.toolStripSplitButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripSplitButton2.Name = "toolStripSplitButton2";
-            this.toolStripSplitButton2.Size = new System.Drawing.Size(88, 22);
-            this.toolStripSplitButton2.Text = "导图样式";
+            this.toolStripSeparator9.Name = "toolStripSeparator9";
+            this.toolStripSeparator9.Size = new System.Drawing.Size(6, 25);
             // 
-            // toolStripSeparator8
+            // toolBtnSave
             // 
-            this.toolStripSeparator8.Name = "toolStripSeparator8";
-            this.toolStripSeparator8.Size = new System.Drawing.Size(6, 25);
+            this.toolBtnSave.Image = ((System.Drawing.Image)(resources.GetObject("toolBtnSave.Image")));
+            this.toolBtnSave.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolBtnSave.Name = "toolBtnSave";
+            this.toolBtnSave.Size = new System.Drawing.Size(52, 22);
+            this.toolBtnSave.Text = "保存";
+            this.toolBtnSave.Click += new System.EventHandler(this.toolBtnSave_Click);
             // 
-            // toolBtnStyleDefault
+            // toolBtnLoad
             // 
-            this.toolBtnStyleDefault.Name = "toolBtnStyleDefault";
-            this.toolBtnStyleDefault.Size = new System.Drawing.Size(152, 22);
-            this.toolBtnStyleDefault.Text = "默认";
-            this.toolBtnStyleDefault.Click += new System.EventHandler(this.toolBtnStyleDefault_Click);
-            // 
-            // toolBtnStyleClassics
-            // 
-            this.toolBtnStyleClassics.Name = "toolBtnStyleClassics";
-            this.toolBtnStyleClassics.Size = new System.Drawing.Size(152, 22);
-            this.toolBtnStyleClassics.Text = "经典蓝";
-            this.toolBtnStyleClassics.Click += new System.EventHandler(this.toolBtnStyleClassics_Click);
-            // 
-            // toolBtnStyleBubble
-            // 
-            this.toolBtnStyleBubble.Name = "toolBtnStyleBubble";
-            this.toolBtnStyleBubble.Size = new System.Drawing.Size(152, 22);
-            this.toolBtnStyleBubble.Text = "气泡";
-            this.toolBtnStyleBubble.Click += new System.EventHandler(this.toolBtnStyleBubble_Click);
-            // 
-            // toolBtnStyleLemo
-            // 
-            this.toolBtnStyleLemo.Name = "toolBtnStyleLemo";
-            this.toolBtnStyleLemo.Size = new System.Drawing.Size(152, 22);
-            this.toolBtnStyleLemo.Text = "柠檬";
-            this.toolBtnStyleLemo.Click += new System.EventHandler(this.toolBtnStyleLemo_Click);
-            // 
-            // toolBtnStyleBlack
-            // 
-            this.toolBtnStyleBlack.Name = "toolBtnStyleBlack";
-            this.toolBtnStyleBlack.Size = new System.Drawing.Size(152, 22);
-            this.toolBtnStyleBlack.Text = "星空";
-            this.toolBtnStyleBlack.Click += new System.EventHandler(this.toolBtnStyleBlack_Click);
-            // 
-            // panelBubble
-            // 
-            this.panelBubble.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("panelBubble.BackgroundImage")));
-            this.panelBubble.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panelBubble.Location = new System.Drawing.Point(598, 0);
-            this.panelBubble.Name = "panelBubble";
-            this.panelBubble.Size = new System.Drawing.Size(61, 26);
-            this.panelBubble.TabIndex = 0;
-            this.panelBubble.Visible = false;
-            // 
-            // panelBlack
-            // 
-            this.panelBlack.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("panelBlack.BackgroundImage")));
-            this.panelBlack.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panelBlack.Location = new System.Drawing.Point(540, 0);
-            this.panelBlack.Name = "panelBlack";
-            this.panelBlack.Size = new System.Drawing.Size(58, 26);
-            this.panelBlack.TabIndex = 0;
-            this.panelBlack.Visible = false;
+            this.toolBtnLoad.Image = ((System.Drawing.Image)(resources.GetObject("toolBtnLoad.Image")));
+            this.toolBtnLoad.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolBtnLoad.Name = "toolBtnLoad";
+            this.toolBtnLoad.Size = new System.Drawing.Size(52, 22);
+            this.toolBtnLoad.Text = "加载";
+            this.toolBtnLoad.Click += new System.EventHandler(this.toolBtnLoad_Click);
             // 
             // UcMindMap
             // 
@@ -675,5 +719,9 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator8;
         private System.Windows.Forms.Panel panelBubble;
         private System.Windows.Forms.Panel panelBlack;
+        private System.Windows.Forms.Button btnCenter;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator9;
+        private System.Windows.Forms.ToolStripButton toolBtnSave;
+        private System.Windows.Forms.ToolStripButton toolBtnLoad;
     }
 }
