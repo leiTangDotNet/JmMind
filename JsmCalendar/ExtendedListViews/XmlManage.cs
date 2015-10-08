@@ -14,10 +14,16 @@ namespace JsmMind
 {
     class XmlManage
     {
-        public static string SaveSubject(SubjectBase centerSubject, List<SubjectBase> floatSubjects)
+        public static string SaveSubject(SubjectBase centerSubject, List<SubjectBase> floatSubjects,MapTheme theme)
         {
             XmlDocument doc = new XmlDocument();
             XmlElement root = doc.CreateElement("JmMap");
+
+            XmlAttribute nodeAtt = doc.CreateAttribute("Theme");
+            XmlText nodeText = doc.CreateTextNode(theme.ToString());
+            nodeAtt.AppendChild(nodeText);
+            root.Attributes.Append(nodeAtt);
+
 
             SaveSubjectInfo(doc,root, centerSubject);
             foreach(SubjectBase floatSubject in floatSubjects)
@@ -76,26 +82,37 @@ namespace JsmMind
             }
             return obElement; 
         }
-         
-        public static SubjectBase ReadSubject(string xml)
+
+        public static SubjectBase ReadSubject(string xml, List<SubjectBase> floatSubjects, out MapTheme theme)
         {
             XmlDocument NexusDocument = new XmlDocument();
 
             NexusDocument.LoadXml(xml);
-             
+
+            theme = MapTheme.Default;
+
             //Read Map Attributes
             foreach (XmlAttribute att in NexusDocument.DocumentElement.Attributes)
             {
                 string name = att.Name;
                 string value = att.Value; 
+                if(name=="Theme")
+                {
+                    theme = (MapTheme)Enum.Parse(typeof(MapTheme), value);
+                }
             }
             //Read CenterSubject,FloatSubject
-            SubjectBase centetSubject = null;
+            SubjectBase centetSubject = null; 
             foreach (XmlNode node in NexusDocument.DocumentElement.ChildNodes)
             {  
                 if(node.Name=="CenterSubject")
                 {
                     centetSubject = ReadSubjectInfo(node);
+                }
+                else
+                {
+                    SubjectBase floatSubject = ReadSubjectInfo(node);
+                    floatSubjects.Add(floatSubject);
                 }
             }
             return centetSubject;
@@ -125,6 +142,7 @@ namespace JsmMind
                     { 
                         SubjectBase childsubject  = ReadSubjectInfo(nodeChildSubject);
                         subject.ChildSubjects.Add(childsubject);
+                        childsubject.ParentSubject = subject;
                     } 
                 } 
             }
@@ -220,7 +238,7 @@ namespace JsmMind
                     Font font = new Font(ss[0], float.Parse(ss[1]), fs);
                     propertyInfo.SetValue(columnInput, font, null);
                 }
-                if (propertyInfo.PropertyType == typeof(DateTime))
+                else if (propertyInfo.PropertyType == typeof(DateTime))
                 {
                     propertyInfo.SetValue(columnInput, DateTime.Parse(value), null);
                 }
@@ -243,7 +261,8 @@ namespace JsmMind
                 }
                 else
                 {
-                    propertyInfo.SetValue(columnInput, null, null);
+                    //默认处理
+                    //propertyInfo.SetValue(columnInput, null, null);
                 }
             }
         }

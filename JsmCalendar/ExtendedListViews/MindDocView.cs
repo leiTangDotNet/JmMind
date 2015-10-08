@@ -1165,6 +1165,7 @@ namespace JsmMind
         public bool Expanded
         {
             get { return expanded; }
+            set { expanded = value; }
         }
         public bool Visible
         {
@@ -1318,6 +1319,10 @@ namespace JsmMind
     [Serializable]
     public class TitleSubject : SubjectBase
     {
+        public TitleSubject()
+        {
+
+        }
         /// <summary>
         /// 初始化主题
         /// </summary>
@@ -1391,6 +1396,10 @@ namespace JsmMind
     [Serializable]
     public class AttachSubject : SubjectBase
     {
+        public AttachSubject()
+        {
+
+        }
         public AttachSubject(SubjectBase subject)
         {
             this.Width = 63;
@@ -2120,7 +2129,7 @@ namespace JsmMind
 
         public void SaveAs(string fileName)
         {
-            string xml =XmlManage.SaveSubject(centerProject, SubjectBase.FloatSubjects);
+            string xml =XmlManage.SaveSubject(centerProject, SubjectBase.FloatSubjects,theme);
             byte[] zipBuffer = System.Text.Encoding.UTF8.GetBytes(xml);
             FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
             fs.Write(zipBuffer, 0, zipBuffer.Length);
@@ -2134,10 +2143,31 @@ namespace JsmMind
             byte[] bBuffer = new byte[fs.Length];
             fs.Read(bBuffer, 0, (int)fs.Length);
             string xml = System.Text.Encoding.UTF8.GetString(bBuffer);
-
-            SubjectBase subject= XmlManage.ReadSubject(xml);
+            fs.Close();
+            List<SubjectBase> floatSubjects = new List<SubjectBase>();
+            MapTheme mapTheme= MapTheme.Default;
+            SubjectBase subject = XmlManage.ReadSubject(xml, floatSubjects, out mapTheme);
             centerProject = subject;
+            SubjectBase.FloatSubjects = floatSubjects;
+            Theme = mapTheme;
+
+            subjectNodes.Clear();
+            AddSubjectNode(centerProject);
+            foreach(SubjectBase floatSubject in SubjectBase.FloatSubjects)
+            {
+                AddSubjectNode(floatSubject);
+            }
         }
+        private void AddSubjectNode(SubjectBase subject)
+        {
+            subjectNodes.Add(subject);
+            foreach(SubjectBase childSubject in subject.ChildSubjects)
+            {
+                AddSubjectNode(childSubject);
+            }
+        }
+
+
         #endregion
 
         #region Overrides
@@ -2561,6 +2591,10 @@ namespace JsmMind
             //开始绘制
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
+            if(subjectNode.Title=="备份")
+            {
+
+            }
             //1.绘制连接线 
             if (subjectNode.ParentSubject != null)
             {
@@ -2750,7 +2784,7 @@ namespace JsmMind
 
         private void RendrBranchLink(Graphics g, Rectangle r, SubjectBase subject, int x1, int y1, int x2, int y2)
         {
-            Color penColor = subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor;
+            Color penColor = subject.BorderColor.A==0 ? subject.ForeColor : subject.BorderColor;
             Pen penLine = new Pen(penColor, 1.0f);
             //绘制分支主线
             g.DrawLine(penLine, x1, y1, x2, y2);
@@ -2852,7 +2886,11 @@ namespace JsmMind
 
         private void RenderLinkBranch(Graphics g, Rectangle r, SubjectBase subject)
         {
-            Pen penLine = new Pen(subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor, 1.0f);
+            if(subject.BorderColor.A==0)
+            {
+
+            }
+            Pen penLine = new Pen(subject.BorderColor.A==0 ? subject.ForeColor : subject.BorderColor, 1.0f);
             SubjectBase parentSubject = subject.ParentSubject;
             int branchLinkWidth = parentSubject.BranchLinkWidth;
 
@@ -3099,7 +3137,7 @@ namespace JsmMind
         }
         private void RenderLinkAttach(Graphics g, Rectangle r, SubjectBase subject)
         {
-            Pen penLine = new Pen(subject.BorderColor == Color.Transparent ? subject.ForeColor : subject.BorderColor, 1.0f);
+            Pen penLine = new Pen(subject.BorderColor.A==0? subject.ForeColor : subject.BorderColor, 1.0f);
             SubjectBase relateSubject = subject.RelateSubject;
             //管理主题中心点
             int x1 = relateSubject.CenterPoint.X;
