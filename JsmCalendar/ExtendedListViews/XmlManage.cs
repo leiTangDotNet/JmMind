@@ -14,16 +14,13 @@ namespace JsmMind
 {
     class XmlManage
     {
-        public static string SaveSubject(SubjectBase centerSubject, List<SubjectBase> floatSubjects,MapTheme theme)
+        public static string SaveSubject(SubjectBase centerSubject, List<SubjectBase> floatSubjects,MapTheme theme,MapViewModel viewmodel)
         {
             XmlDocument doc = new XmlDocument();
             XmlElement root = doc.CreateElement("JmMap");
-
-            XmlAttribute nodeAtt = doc.CreateAttribute("Theme");
-            XmlText nodeText = doc.CreateTextNode(theme.ToString());
-            nodeAtt.AppendChild(nodeText);
-            root.Attributes.Append(nodeAtt);
-
+              
+            CreateObjectAttribute(doc, root, "Theme", theme.ToString());
+            CreateObjectAttribute(doc, root, "ViewModel", viewmodel.ToString());
 
             SaveSubjectInfo(doc,root, centerSubject);
             foreach(SubjectBase floatSubject in floatSubjects)
@@ -35,6 +32,7 @@ namespace JsmMind
             string ss = doc.InnerXml;
             return ss;
         }
+
 
         private static void SaveSubjectInfo(XmlDocument doc, XmlElement root, SubjectBase subject)
         {
@@ -81,16 +79,23 @@ namespace JsmMind
                 obElement.Attributes.Append(nodeAtt);
             }
             return obElement; 
+        } 
+        private static void CreateObjectAttribute(XmlDocument doc, XmlElement root, string name, string value)
+        {
+            XmlAttribute nodeAtt = doc.CreateAttribute(name);
+            XmlText nodeText = doc.CreateTextNode(value);
+            nodeAtt.AppendChild(nodeText);
+            root.Attributes.Append(nodeAtt);
         }
 
-        public static SubjectBase ReadSubject(string xml, List<SubjectBase> floatSubjects, out MapTheme theme)
+        public static SubjectBase ReadSubject(string xml, List<SubjectBase> floatSubjects, out MapTheme theme,out MapViewModel viewmodel)
         {
             XmlDocument NexusDocument = new XmlDocument();
 
             NexusDocument.LoadXml(xml);
 
             theme = MapTheme.Default;
-
+            viewmodel = MapViewModel.ExpandRightSide;
             //Read Map Attributes
             foreach (XmlAttribute att in NexusDocument.DocumentElement.Attributes)
             {
@@ -99,6 +104,10 @@ namespace JsmMind
                 if(name=="Theme")
                 {
                     theme = (MapTheme)Enum.Parse(typeof(MapTheme), value);
+                }
+                else if (name == "ViewModel")
+                {
+                    viewmodel = (MapViewModel)Enum.Parse(typeof(MapViewModel), value);
                 }
             }
             //Read CenterSubject,FloatSubject

@@ -2129,7 +2129,7 @@ namespace JsmMind
 
         public void SaveAs(string fileName)
         {
-            string xml =XmlManage.SaveSubject(centerProject, SubjectBase.FloatSubjects,theme);
+            string xml = GetXml();
             byte[] zipBuffer = System.Text.Encoding.UTF8.GetBytes(xml);
             FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
             fs.Write(zipBuffer, 0, zipBuffer.Length);
@@ -2137,26 +2137,38 @@ namespace JsmMind
         }
 
         public void ReadAs(string fileName)
-        { 
+        {
             FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
 
             byte[] bBuffer = new byte[fs.Length];
             fs.Read(bBuffer, 0, (int)fs.Length);
             string xml = System.Text.Encoding.UTF8.GetString(bBuffer);
             fs.Close();
+            SetXml(xml);
+        }
+        public string GetXml()
+        {
+            string xml = XmlManage.SaveSubject(centerProject, SubjectBase.FloatSubjects, theme, ViewModel);
+            return xml;
+        }
+        public void SetXml(string xml)
+        {
+            ClearSubject();
             List<SubjectBase> floatSubjects = new List<SubjectBase>();
-            MapTheme mapTheme= MapTheme.Default;
-            SubjectBase subject = XmlManage.ReadSubject(xml, floatSubjects, out mapTheme);
+            MapTheme mapTheme = MapTheme.Default;
+            MapViewModel mapViewModel = MapViewModel.ExpandRightSide;
+            SubjectBase subject = XmlManage.ReadSubject(xml, floatSubjects, out mapTheme, out mapViewModel);
             centerProject = subject;
             SubjectBase.FloatSubjects = floatSubjects;
             Theme = mapTheme;
-
+            ViewModel = mapViewModel;
             subjectNodes.Clear();
             AddSubjectNode(centerProject);
-            foreach(SubjectBase floatSubject in SubjectBase.FloatSubjects)
+            foreach (SubjectBase floatSubject in SubjectBase.FloatSubjects)
             {
                 AddSubjectNode(floatSubject);
             }
+            Invalidate();
         }
         private void AddSubjectNode(SubjectBase subject)
         {
@@ -2167,6 +2179,16 @@ namespace JsmMind
             }
         }
 
+        public void ClearSubject()
+        {
+            subjectNodes.Clear();
+            SubjectBase.FloatSubjects.Clear();
+
+            centerProject = new CenterSubject();
+            centerProject.CenterPoint = new Point(this.Width / 2, this.Height / 2);
+            subjectNodes.Add(centerProject);
+            Invalidate();
+        }
 
         #endregion
 
@@ -3227,7 +3249,7 @@ namespace JsmMind
             {
                 //»æÖÆ×ó±ßPlus
                 Rectangle pmLeft = new Rectangle(area.Left - (int)(8 * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
-                subject.RectPlusLeft = new Rectangle(pmLeft.Left, pmLeft.Top, pmLeft.Width / 2, pmLeft.Height);
+                subject.RectPlusLeft = new Rectangle(pmLeft.Left, pmLeft.Top, (int)(10 * SubjectBase.zoomValue), pmLeft.Height);
                 g.Clip = new Region(subject.RectPlusLeft);  //·ÀÖ¹³¬³ö±ß½ç  
                 RenderPlusLeft(g, pmLeft, penPlus, selectPlus == 1 ? Color.LightSteelBlue : Color.SteelBlue);
             }
@@ -3235,7 +3257,7 @@ namespace JsmMind
             {
                 //»æÖÆÓÒ±ß±ßPlus
                 Rectangle pmRight = new Rectangle(area.Left + area.Width - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), area.Top + area.Height / 2 - (int)(10 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue));
-                subject.RectPlusRight = new Rectangle(pmRight.Left + pmRight.Width / 2, pmRight.Top, pmRight.Width / 2, pmRight.Height);
+                subject.RectPlusRight = new Rectangle(pmRight.Right - (int)(10 * SubjectBase.zoomValue), pmRight.Top, (int)(10 * SubjectBase.zoomValue), pmRight.Height);
                 g.Clip = new Region(subject.RectPlusRight);  //·ÀÖ¹³¬³ö±ß½ç           
                 RenderPlusRight(g, pmRight, penPlus, selectPlus == 3 ? Color.LightSteelBlue : Color.SteelBlue);
             }
@@ -3244,7 +3266,7 @@ namespace JsmMind
                 //»æÖÆÉÏ±ßPlus
 
                 Rectangle pmTop = new Rectangle(area.Left + area.Width / 2 - (int)(10 * SubjectBase.zoomValue), area.Top - (int)(8 * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue));
-                subject.RectPlusTop = new Rectangle(pmTop.Left, pmTop.Top, pmTop.Width, pmTop.Height / 2);
+                subject.RectPlusTop = new Rectangle(pmTop.Left, pmTop.Top, pmTop.Width, (int)(7 * SubjectBase.zoomValue));
 
                 g.Clip = new Region(subject.RectPlusTop);  //·ÀÖ¹³¬³ö±ß½ç
                 RenderPlusTop(g, pmTop, penPlus, selectPlus == 2 ? Color.LightSteelBlue : Color.SteelBlue);
@@ -3253,7 +3275,7 @@ namespace JsmMind
             {
                 //»æÖÆÏÂ±ßPlus
                 Rectangle pmBottom = new Rectangle(area.Left + area.Width / 2 - (int)(10 * SubjectBase.zoomValue), area.Top + area.Height - (int)(((40 - 8) + 1) * SubjectBase.zoomValue), (int)(20 * SubjectBase.zoomValue), (int)(40 * SubjectBase.zoomValue));
-                subject.RectPlusBottom = new Rectangle(pmBottom.Left, pmBottom.Top + pmBottom.Height / 2, pmBottom.Width, pmBottom.Height / 2);
+                subject.RectPlusBottom = new Rectangle(pmBottom.Left, pmBottom.Bottom - (int)(7 * SubjectBase.zoomValue), pmBottom.Width, (int)(7 * SubjectBase.zoomValue));
 
                 g.Clip = new Region(subject.RectPlusBottom);  //·ÀÖ¹³¬³ö±ß½ç
                 RenderPlusBottom(g, pmBottom, penPlus, selectPlus == 4 ? Color.LightSteelBlue : Color.SteelBlue);
